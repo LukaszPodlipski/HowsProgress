@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['shadcn-nuxt', '@nuxt/eslint'],
+  modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image'],
   compatibilityDate: '2024-04-03',
   ssr: false,
 
@@ -36,5 +36,9 @@ export default defineNuxtConfig({
      * @default "@/components/ui"
      */
     componentDir: '~/components/ui',
+  },
+
+  image: {
+    dir: 'assets/images',
   },
 })

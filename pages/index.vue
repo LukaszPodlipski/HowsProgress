@@ -23,7 +23,5 @@ const handleStorageChange = () => {
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto p-6 bg-background">
-    <Button>Click me</Button>
-  </div>
+  <div class="max-w-3xl mx-auto p-6 bg-background"></div>
 </template>
