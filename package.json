@@ -1,0 +1,29 @@
+{
+  "name": "how-is-your-progress",
+  "version": "1.0.0",
+  "description": "Aplikacja do notowania codziennych zadań w pracy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^2.15.0",
+    "nuxt": "^3.12.0",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "@nuxtjs/tailwindcss": "^6.12.0",
+    "typescript": "^5.4.5"
+  }
+}
+

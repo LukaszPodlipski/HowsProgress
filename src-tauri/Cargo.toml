@@ -1,0 +1,20 @@
+[package]
+name = "how-is-your-progress"
+version = "1.0.0"
+description = "Aplikacja do notowania codziennych zadań w pracy"
+authors = ["Łukasz Podlipski"]
+license = ""
+repository = ""
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+tauri-plugin-shell = "2.0"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+

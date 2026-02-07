@@ -1,0 +1,41 @@
+<script setup lang="ts">
+import { useTasks } from '~/composables/useTasks'
+
+const { getTasks } = useTasks()
+
+const tasks = ref(getTasks())
+
+const refreshTasks = () => {
+  tasks.value = getTasks()
+}
+
+
+onMounted(() => {
+  window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange)
+})
+
+const handleStorageChange = () => {
+  refreshTasks()
+}
+
+const formatTodayDate = (): string => {
+  const today = new Date()
+  return today.toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+</script>
+
+<template>
+  <div class="max-w-3xl mx-auto p-6">
+    <!-- TODO: Add task list here -->
+  </div>    
+</template>
+
