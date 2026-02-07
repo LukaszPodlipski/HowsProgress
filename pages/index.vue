@@ -21,16 +21,6 @@ onUnmounted(() => {
 const handleStorageChange = () => {
   refreshTasks()
 }
-
-const formatTodayDate = (): string => {
-  const today = new Date()
-  return today.toLocaleDateString('pl-PL', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
 </script>
 
 <template>
