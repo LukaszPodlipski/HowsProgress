@@ -1,9 +1,11 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from '@tailwindcss/vite'
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: [],
+  modules: ['shadcn-nuxt'],
   compatibilityDate: '2024-04-03',
   ssr: false,
+  
   app: {
     head: {
       title: 'How\'s progress?',
@@ -12,6 +14,29 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' }
       ]
     }
+  },
+
+  css: ['@/assets/css/tailwind.css'],
+
+  vite: {
+    plugins: [
+      (tailwindcss() as any),
+    ],
+  },
+
+
+  shadcn: {
+    /**
+     * Prefix for all the imported component.
+     * @default "Ui"
+     */
+    prefix: '',
+    /**
+     * Directory that the component lives in.
+     * Will respect the Nuxt aliases.
+     * @link https://nuxt.com/docs/api/nuxt-config#alias
+     * @default "@/components/ui"
+     */
+    componentDir: '~/components/ui'
   }
 })
-
