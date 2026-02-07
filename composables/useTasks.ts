@@ -11,7 +11,7 @@ const STORAGE_KEY = 'how-is-your-progress-tasks'
 export const useTasks = () => {
   const getTasks = (): Task[] => {
     if (typeof window === 'undefined') return []
-    
+
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (!stored) return []
@@ -24,7 +24,7 @@ export const useTasks = () => {
 
   const saveTasks = (tasks: Task[]): void => {
     if (typeof window === 'undefined') return
-    
+
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
     } catch (error) {
@@ -38,13 +38,13 @@ export const useTasks = () => {
       text: text.trim(),
       date: date || new Date().toISOString().split('T')[0], // YYYY-MM-DD
       completed: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     }
 
     const tasks = getTasks()
     tasks.push(task)
     saveTasks(tasks)
-    
+
     return task
   }
 
@@ -57,7 +57,7 @@ export const useTasks = () => {
   const updateTask = (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>): void => {
     const tasks = getTasks()
     const index = tasks.findIndex(task => task.id === id)
-    
+
     if (index !== -1) {
       tasks[index] = { ...tasks[index], ...updates }
       saveTasks(tasks)
@@ -71,4 +71,3 @@ export const useTasks = () => {
     updateTask,
   }
 }
-

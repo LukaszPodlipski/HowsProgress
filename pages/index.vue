@@ -9,7 +9,6 @@ const refreshTasks = () => {
   tasks.value = getTasks()
 }
 
-
 onMounted(() => {
   window.addEventListener('storage', handleStorageChange)
 })
@@ -26,6 +25,5 @@ const handleStorageChange = () => {
 <template>
   <div class="max-w-3xl mx-auto p-6 bg-background">
     <Button>Click me</Button>
-  </div>    
+  </div>
 </template>
-

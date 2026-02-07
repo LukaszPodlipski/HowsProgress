@@ -2,31 +2,26 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['shadcn-nuxt'],
+  modules: ['shadcn-nuxt', '@nuxt/eslint'],
   compatibilityDate: '2024-04-03',
   ssr: false,
-  
+
   app: {
     head: {
-      title: 'How\'s progress?',
+      title: "How's progress?",
       meta: [
         { charset: 'utf-8' },
-        { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       ],
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-      ]
-    }
+      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    },
   },
 
   css: ['@/assets/css/tailwind.css'],
 
   vite: {
-    plugins: [
-      (tailwindcss() as any),
-    ],
+    plugins: [tailwindcss() as unknown as ReturnType<typeof tailwindcss>],
   },
-
 
   shadcn: {
     /**
@@ -40,6 +35,6 @@ export default defineNuxtConfig({
      * @link https://nuxt.com/docs/api/nuxt-config#alias
      * @default "@/components/ui"
      */
-    componentDir: '~/components/ui'
-  }
+    componentDir: '~/components/ui',
+  },
 })
