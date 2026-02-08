@@ -20,7 +20,8 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
 
   vite: {
-    plugins: [tailwindcss() as unknown as ReturnType<typeof tailwindcss>],
+    // @ts-expect-error: Tailwind CSS plugin type is not properly typed
+    plugins: [tailwindcss()],
   },
 
   shadcn: {

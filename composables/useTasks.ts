@@ -1,21 +1,23 @@
 export interface Task {
   id: string
   text: string
-  date: string // ISO date string
+  date: Date
   completed: boolean
   createdAt: string // ISO timestamp
 }
 
 const STORAGE_KEY = 'how-is-your-progress-tasks'
 
+const tasks = ref<Task[]>([])
+
 export const useTasks = () => {
-  const getTasks = (): Task[] => {
-    if (typeof window === 'undefined') return []
+  const fetchTasks = () => {
+    if (typeof window === 'undefined') return
 
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (!stored) return []
-      return JSON.parse(stored) as Task[]
+      tasks.value = JSON.parse(stored) as Task[]
     } catch (error) {
       console.error('Błąd podczas odczytu zadań:', error)
       return []
@@ -32,42 +34,30 @@ export const useTasks = () => {
     }
   }
 
-  const addTask = (text: string, date?: string): Task => {
+  const addTask = (text: string): Task => {
     const task: Task = {
       id: crypto.randomUUID(),
       text: text.trim(),
-      date: date || new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      date: new Date(),
       completed: false,
       createdAt: new Date().toISOString(),
     }
 
-    const tasks = getTasks()
-    tasks.push(task)
-    saveTasks(tasks)
+    tasks.value.push(task)
+    saveTasks(tasks.value)
 
     return task
   }
 
   const removeTask = (id: string): void => {
-    const tasks = getTasks()
-    const filtered = tasks.filter(task => task.id !== id)
+    const filtered = tasks.value.filter(task => task.id !== id)
     saveTasks(filtered)
   }
 
-  const updateTask = (id: string, updates: Partial<Omit<Task, 'id' | 'createdAt'>>): void => {
-    const tasks = getTasks()
-    const index = tasks.findIndex(task => task.id === id)
-
-    if (index !== -1) {
-      tasks[index] = { ...tasks[index], ...updates }
-      saveTasks(tasks)
-    }
-  }
-
   return {
-    getTasks,
+    fetchTasks,
     addTask,
     removeTask,
-    updateTask,
+    tasks,
   }
 }
