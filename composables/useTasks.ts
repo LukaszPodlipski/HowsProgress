@@ -1,10 +1,5 @@
-export interface Task {
-  id: string
-  text: string
-  date: Date
-  completed: boolean
-  createdAt: string // ISO timestamp
-}
+import type { Task } from '@/types'
+import { TaskStatus } from '@/types/enums'
 
 const STORAGE_KEY = 'how-is-your-progress-tasks'
 
@@ -38,8 +33,7 @@ export const useTasks = () => {
     const task: Task = {
       id: crypto.randomUUID(),
       text: text.trim(),
-      date: new Date(),
-      completed: false,
+      status: TaskStatus.COMPLETED,
       createdAt: new Date().toISOString(),
     }
 

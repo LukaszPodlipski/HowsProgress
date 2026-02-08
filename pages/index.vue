@@ -21,6 +21,6 @@ onUnmounted(() => {
 <template>
   <div class="max-w-3xl mx-auto py-6 bg-background flex flex-col gap-4 h-full relative w-full">
     <TasksList class="flex-1" />
-    <TaskInput class="sticky bottom-0 left-0 right-0" />
+    <TaskInput class="fixed bottom-4 left-0 right-0 max-w-3xl mx-auto" />
   </div>
 </template>

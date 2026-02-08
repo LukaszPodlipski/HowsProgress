@@ -20,7 +20,6 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css'],
 
   vite: {
-    // @ts-expect-error: Tailwind CSS plugin type is not properly typed
     plugins: [tailwindcss()],
   },
 

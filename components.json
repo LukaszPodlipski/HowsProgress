@@ -8,8 +8,8 @@
     "baseColor": "slate"
   },
   "aliases": {
-    "components": "~/components",
-    "utils": "~/utils",
-    "ui": "~/components/ui"
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui"
   }
 }
