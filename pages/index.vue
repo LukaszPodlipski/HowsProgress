@@ -3,24 +3,44 @@ import TaskInput from '@/components/tasks/TaskInput.vue'
 import TasksList from '@/components/tasks/TasksList.vue'
 import { useTasks } from '@/composables/useTasks'
 
-const { fetchTasks } = useTasks()
+const tasksList = ref<InstanceType<typeof TasksList> | null>(null)
 
+const { fetchTasks, addTask } = useTasks()
+
+/* --------------------------- FETCH TASKS AND HANDLE STORAGE EVENT ----------------------------------- */
 onBeforeMount(() => {
   fetchTasks()
 })
 
 onMounted(() => {
   window.addEventListener('storage', fetchTasks)
+  scrollTo({
+    top: document.body.scrollHeight,
+    behavior: 'smooth',
+  })
 })
 
 onUnmounted(() => {
   window.removeEventListener('storage', fetchTasks)
 })
+
+/* --------------------------- ADD NEW TASK ----------------------------------- */
+const addNewTask = (task: string) => {
+  addTask(task)
+
+  nextTick(() => {
+    tasksList.value?.scrollToBottom()
+  })
+}
 </script>
 
 <template>
-  <div class="max-w-3xl mx-auto py-6 bg-background flex flex-col gap-4 h-full relative w-full">
-    <TasksList class="flex-1" />
-    <TaskInput class="fixed bottom-4 left-0 right-0 max-w-3xl mx-auto" />
+  <div class="app-view-wrapper">
+    <div class="scroll-list-container">
+      <TasksList ref="tasksList" />
+      <div class="scroll-list__input">
+        <TaskInput @input="addNewTask" />
+      </div>
+    </div>
   </div>
 </template>

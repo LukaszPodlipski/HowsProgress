@@ -19,7 +19,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { ArrowUpIcon, PlusIcon } from 'lucide-vue-next'
 
-const { addTask } = useTasks()
+const emit = defineEmits<{
+  (e: 'submit', message: string): void
+}>()
 
 const messageSchema = z.object({
   message: z.string().max(1000, 'Wiadomość nie może przekraczać 1000 znaków'),
@@ -37,7 +39,7 @@ const { handleSubmit, defineField, errors } = useForm<MessageForm>({
 const [message, messageAttrs] = defineField('message')
 
 const onSubmit = handleSubmit(formValues => {
-  addTask(formValues.message)
+  emit('submit', formValues.message)
   message.value = ''
 })
 </script>

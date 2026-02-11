@@ -1,0 +1,88 @@
+.scroll-list {
+  width: 100%;
+}
+
+/* Hide scrollbars for .scroll-list__wrp (cross-browser) */
+.scroll-list__wrp {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-list__wrp::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-list-container {
+  width: 100%;
+}
+
+.scroll-list__wrp {
+  width: 100%;
+  height: 300px;
+  overflow: auto;
+  border-radius: 8px;
+  padding-top: 64px;
+}
+
+.scroll-list__wrp-frame {
+  position: relative;
+}
+
+.scroll-list__fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 32px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    var(--background) 0%,
+    color-mix(in oklch, var(--background) 30%, transparent) 40%,
+    transparent 100%
+  );
+}
+
+.scroll-list__fade--top {
+  top: 0;
+}
+
+.scroll-list__fade--bottom {
+  bottom: 0;
+  transform: rotate(180deg);
+}
+
+.scroll-list__list {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.scroll-list__item {
+  width: 100%;
+  display: block;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  transition: all 0.35s ease-in-out;
+  opacity: 0;
+  transform: scale(0.7);
+}
+
+.scroll-list__item.item-visible,
+.scroll-list__item.item-focus {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.scroll-list__input {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  margin-top: 16px;
+}
+
+@media screen and (max-width: 768px) {
+  .scroll-list {
+    margin-top: 20px;
+  }
+}
