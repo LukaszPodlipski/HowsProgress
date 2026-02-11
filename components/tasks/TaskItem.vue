@@ -8,7 +8,7 @@ defineProps<{
 </script>
 
 <template>
-  <Item variant="outline">
+  <Item variant="outline" class="transition-colors hover:border-accent">
     <ItemContent>
       <ItemTitle>{{ task.text }}</ItemTitle>
       <!-- <ItemDescription> A simple item with title and description. </ItemDescription> -->
