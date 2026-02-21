@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<InputGroupButtonProps>(), {
   <Button
     :data-size="props.size"
     :variant="props.variant"
-    :class="cn(inputGroupButtonVariants({ size: props.size }), props.class)"
+    :class="cn('cursor-pointer', inputGroupButtonVariants({ size: props.size }), props.class)"
   >
     <slot />
   </Button>

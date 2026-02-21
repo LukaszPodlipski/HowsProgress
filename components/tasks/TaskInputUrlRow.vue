@@ -36,12 +36,12 @@ const emit = defineEmits<{
     />
     <button
       type="button"
-      class="remove-row-btn absolute top-1/2 right-1 z-10 -translate-y-1/2 rounded-xl p-1 transition hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/60 w-[24px] h-[24px]"
+      class="absolute top-1 right-2 z-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer w-[24px] h-[24px]"
       :aria-label="removeAriaLabel"
       tabindex="0"
       @click="emit('remove')"
     >
-      <Icon name="lucide:x" class="size-4 mb-1" />
+      <Icon name="lucide:x" class="size-4" />
     </button>
   </div>
 </template>

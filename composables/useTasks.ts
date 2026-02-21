@@ -63,6 +63,24 @@ export const useTasks = () => {
     saveTasksLocalStorage(filtered)
   }
 
+  const updateTask = (id: string, form: TaskForm): void => {
+    const index = tasks.value.findIndex(t => t.id === id)
+    if (index === -1) return console.error('Task not found')
+
+    const existing = tasks.value[index]!
+    const cleanExternal = (form.externalLinks ?? []).filter((u): u is string => Boolean(u?.trim()))
+    tasks.value[index] = {
+      ...existing,
+      title: form.title.trim(),
+      description: form.description?.trim() || undefined,
+      status: form.taskStatus,
+      gitUrl: form.gitUrl?.trim() || undefined,
+      jiraUrl: form.jiraUrl?.trim() || undefined,
+      externalLinks: cleanExternal.length ? cleanExternal : undefined,
+    }
+    saveTasksLocalStorage(tasks.value)
+  }
+
   const restoreTask = (task: Task, index?: number): void => {
     if (typeof index === 'number' && index >= 0 && index <= tasks.value.length) {
       tasks.value.splice(index, 0, task)
@@ -75,6 +93,7 @@ export const useTasks = () => {
   return {
     fetchTasks,
     addTask,
+    updateTask,
     removeTask,
     restoreTask,
     tasks,

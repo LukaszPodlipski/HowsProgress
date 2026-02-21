@@ -3,9 +3,37 @@ import { useTasks } from '@/composables/useTasks'
 import { useWindowSize } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
+import TaskEditModal from './TaskEditModal.vue'
+import type { TaskForm } from '@/composables/useTaskForm'
+import type { Task } from '@/types'
 
-const { tasks, removeTask, restoreTask } = useTasks()
+const { tasks, removeTask, restoreTask, updateTask } = useTasks()
 
+/* ------------------------- EDIT MODAL ----------------------------------- */
+const editingTask = ref<Task | null>(null)
+const isEditModalOpen = ref(false)
+
+const handleEditTask = (taskId: string) => {
+  editingTask.value = tasks.value.find(t => t.id === taskId) ?? null
+  isEditModalOpen.value = true
+}
+
+const handleModalOpenChange = (open: boolean) => {
+  isEditModalOpen.value = open
+  if (!open) {
+    setTimeout(() => {
+      editingTask.value = null
+    }, 250)
+  }
+}
+
+const handleSaveTask = (form: TaskForm) => {
+  if (editingTask.value) {
+    updateTask(editingTask.value.id, form)
+  }
+}
+
+/* ------------------------- REMOVE TASK ----------------------------------- */
 const handleRemoveTask = (taskId: string) => {
   const index = tasks.value.findIndex(t => t.id === taskId)
   const task = index !== -1 ? tasks.value[index] : undefined
@@ -176,7 +204,7 @@ defineExpose({ scrollToBottom })
               'item-visible': visibleTaskIds.has(task.id),
             }"
           >
-            <TaskItem :task="task" @remove="handleRemoveTask" />
+            <TaskItem :task="task" @remove="handleRemoveTask" @edit="handleEditTask" />
           </li>
         </ul>
       </div>
@@ -184,4 +212,13 @@ defineExpose({ scrollToBottom })
       <div class="scroll-list__fade scroll-list__fade--bottom" aria-hidden="true"></div>
     </div>
   </div>
+
+  <TaskEditModal
+    v-if="editingTask"
+    :key="editingTask.id"
+    :task="editingTask"
+    :open="isEditModalOpen"
+    @update:open="handleModalOpenChange"
+    @save="handleSaveTask"
+  />
 </template>

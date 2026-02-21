@@ -7,8 +7,8 @@ const urlSchema = z.string().url('Wprowadź prawidłowy adres URL')
 const optionalUrlSchema = z.union([z.literal(''), urlSchema]).optional()
 
 export const taskFormSchema = z.object({
-  title: z.string().max(1000, 'Tytuł nie może przekraczać 1000 znaków'),
-  description: z.string().max(2000, 'Opis nie może przekraczać 2000 znaków').optional(),
+  title: z.string().max(100, 'Tytuł nie może przekraczać 100 znaków'),
+  description: z.string().max(1000, 'Opis nie może przekraczać 1000 znaków').optional(),
   taskStatus: z.nativeEnum(TaskStatus),
   gitUrl: optionalUrlSchema,
   jiraUrl: optionalUrlSchema,
@@ -63,10 +63,15 @@ function normalizeSubmitPayload(values: TaskForm): TaskForm {
   }
 }
 
-export function useTaskForm(onSubmitCallback: (form: TaskForm) => void) {
+export function useTaskForm(
+  onSubmitCallback: (form: TaskForm) => void,
+  initial?: Partial<TaskForm>
+) {
+  const startValues: TaskForm = { ...INITIAL_VALUES, ...initial }
+
   const { handleSubmit, defineField, errors } = useForm<TaskForm>({
     validationSchema: toTypedSchema(taskFormSchema),
-    initialValues: { ...INITIAL_VALUES },
+    initialValues: startValues,
   })
 
   const [title, titleAttrs] = defineField('title')
@@ -76,9 +81,9 @@ export function useTaskForm(onSubmitCallback: (form: TaskForm) => void) {
   const [jiraUrl, jiraUrlAttrs] = defineField('jiraUrl')
   const [externalLinks] = defineField('externalLinks')
 
-  const hasDescriptionElement = ref(false)
-  const hasGitElement = ref(false)
-  const hasJiraElement = ref(false)
+  const hasDescriptionElement = ref(Boolean(startValues.description))
+  const hasGitElement = ref(Boolean(startValues.gitUrl))
+  const hasJiraElement = ref(Boolean(startValues.jiraUrl))
 
   const selectedTaskStatus = computed(() =>
     TASK_STATUS_OPTIONS.find(opt => opt.value === taskStatus.value)
