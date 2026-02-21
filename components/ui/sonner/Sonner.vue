@@ -78,8 +78,17 @@ const toastOptions = computed(() => ({
 }
 </style>
 
-<!-- Progress bar: unscoped so it applies to vue-sonner toast DOM -->
+<!-- Opacity transition + progress bar: unscoped so it applies to vue-sonner DOM -->
 <style>
+[data-sonner-toaster].sonner-dark {
+  opacity: 0.9;
+  transition:
+    opacity 0.5s ease,
+    transform 400ms ease;
+}
+[data-sonner-toaster].sonner-dark:hover {
+  opacity: 1;
+}
 [data-sonner-toaster].sonner-dark [data-sonner-toast].toast-with-progress[data-styled='true'] {
   position: relative;
   overflow: hidden;
