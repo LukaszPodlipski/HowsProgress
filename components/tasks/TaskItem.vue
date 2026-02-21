@@ -49,7 +49,7 @@ const hasLinks = computed(
       >
         <button
           type="button"
-          class="p-[6px] rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
+          class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
           aria-label="Edytuj zadanie"
           @click.stop="emit('edit', task.id)"
         >
