@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "skills": {
+    "pinia-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "d2413942dd8f6d7e410caff6e4a15a064ed80f390b94deb77ae98d6291a05db9"
+    },
+    "shadcn-vue-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "7fa9388451161a6189565474f75a8316720fa59c5eb3b3bfcf5830e0b5e0a002"
+    },
+    "vue-i18n-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "1595c29503dea334bcb5d46907dbb2ebcbd5cde829beb4401824fea883529da7"
+    },
+    "vue-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "8f041b16291fb1a9fe6b90361ef9b75bccf8e55487da99ca3a65cb76a5f98bba"
+    },
+    "vue-test-utils-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "0402afea115831a54d5c3774c46e969bf913a785ad85de72054f409bd3c0649f"
+    },
+    "vueuse-components-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "1e7243e7f904fbb258c8fe8fff16743fb71907300467603bf576ebca37f92f66"
+    },
+    "vueuse-core-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "64af43b897305295553aec6a95ae2f85e3313a4e48713ec18d19e800764e61a2"
+    },
+    "vueuse-integrations-skilld": {
+      "source": "harlan-zw/vue-ecosystem-skills",
+      "sourceType": "github",
+      "computedHash": "c8816d334104961eb7c81af7ac9210be7dcc069fe17563fbcb4926746634e697"
+    }
+  }
+}
