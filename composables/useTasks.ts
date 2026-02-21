@@ -24,7 +24,7 @@ export const useTasks = () => {
         externalLinks: t.externalLinks,
       }))
     } catch (error) {
-      console.error('Błąd podczas odczytu zadań:', error)
+      console.error('Error reading tasks:', error)
       return []
     }
   }
@@ -35,7 +35,7 @@ export const useTasks = () => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
     } catch (error) {
-      console.error('Błąd podczas zapisu zadań:', error)
+      console.error('Error saving tasks:', error)
     }
   }
 
@@ -63,10 +63,20 @@ export const useTasks = () => {
     saveTasksLocalStorage(filtered)
   }
 
+  const restoreTask = (task: Task, index?: number): void => {
+    if (typeof index === 'number' && index >= 0 && index <= tasks.value.length) {
+      tasks.value.splice(index, 0, task)
+    } else {
+      tasks.value.push(task)
+    }
+    saveTasksLocalStorage(tasks.value)
+  }
+
   return {
     fetchTasks,
     addTask,
     removeTask,
+    restoreTask,
     tasks,
   }
 }

@@ -1,9 +1,31 @@
 <script setup lang="ts">
 import { useTasks } from '@/composables/useTasks'
 import { useWindowSize } from '@vueuse/core'
+import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
 
-const { tasks, removeTask } = useTasks()
+const { tasks, removeTask, restoreTask } = useTasks()
+
+const handleRemoveTask = (taskId: string) => {
+  const index = tasks.value.findIndex(t => t.id === taskId)
+  const task = index !== -1 ? tasks.value[index] : undefined
+  if (!task) return
+
+  removeTask(taskId)
+
+  toast('Zadanie usunięte', {
+    action: {
+      label: 'Cofnij',
+      onClick: () => {
+        restoreTask(task, index)
+        nextTick(() => {
+          updateFocus()
+          if (index + 1 === tasks.value.length) scrollToBottom()
+        })
+      },
+    },
+  })
+}
 const { height: windowHeight } = useWindowSize()
 
 const taskRefs = ref<Map<string, HTMLElement>>(new Map())
@@ -154,7 +176,7 @@ defineExpose({ scrollToBottom })
               'item-visible': visibleTaskIds.has(task.id),
             }"
           >
-            <TaskItem :task="task" @remove="removeTask" />
+            <TaskItem :task="task" @remove="handleRemoveTask" />
           </li>
         </ul>
       </div>

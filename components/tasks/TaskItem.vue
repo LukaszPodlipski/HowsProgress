@@ -14,7 +14,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <Item variant="outline" class="transition-colors hover:border-accent relative">
+  <Item variant="outline" class="transition-colors hover:border-accent relative bg-card">
     <ItemContent class="pr-8">
       <button
         type="button"

@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['@/assets/css/tailwind.css', '@/assets/css/scroll-list.css'],
+  css: ['@/assets/css/tailwind.css', '@/assets/css/scroll-list.css', 'vue-sonner/style.css'],
 
   vite: {
     plugins: [tailwindcss()],

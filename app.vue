@@ -1,3 +1,7 @@
+<script setup lang="ts">
+import { Toaster } from '@/components/ui/sonner'
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col items-center">
     <nav class="fixed top-0 left-0 right-0 z-100 p-1">
@@ -13,4 +17,5 @@
       <NuxtPage class="w-full" />
     </main>
   </div>
+  <Toaster position="top-center" theme="dark" />
 </template>
