@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import TaskInput from '@/components/tasks/TaskInput.vue'
+import TaskInput, { type TaskForm } from '@/components/tasks/TaskInput.vue'
 import TasksList from '@/components/tasks/TasksList.vue'
 import { useTasks } from '@/composables/useTasks'
 
@@ -25,8 +25,8 @@ onUnmounted(() => {
 })
 
 /* --------------------------- ADD NEW TASK ----------------------------------- */
-const addNewTask = (task: string) => {
-  addTask(task)
+const addNewTask = (taskForm: TaskForm) => {
+  addTask(taskForm)
 
   nextTick(() => {
     tasksList.value?.scrollToBottom()
@@ -39,7 +39,7 @@ const addNewTask = (task: string) => {
     <div class="scroll-list-container">
       <TasksList ref="tasksList" />
       <div class="scroll-list__input">
-        <TaskInput @input="addNewTask" />
+        <TaskInput @submit="addNewTask" />
       </div>
     </div>
   </div>

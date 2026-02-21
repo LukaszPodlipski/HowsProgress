@@ -7,6 +7,7 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
   placeholder?: string
   modelValue?: string | number
+  rows?: number
 }>()
 
 const emits = defineEmits<{
@@ -24,6 +25,7 @@ const emits = defineEmits<{
       )
     "
     :placeholder="placeholder"
+    :rows="rows"
     :model-value="modelValue"
     @update:model-value="emits('update:modelValue', $event)"
   />

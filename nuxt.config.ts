@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image'],
+  modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image', '@nuxt/icon'],
   compatibilityDate: '2024-04-03',
   ssr: false,
 
@@ -40,5 +40,10 @@ export default defineNuxtConfig({
 
   image: {
     dir: 'assets/images',
+  },
+
+  icon: {
+    mode: 'css',
+    cssLayer: 'base',
   },
 })

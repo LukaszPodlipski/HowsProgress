@@ -2,7 +2,11 @@ import type { TaskStatus } from './enums'
 
 export interface Task {
   id: string
-  text: string
+  title: string
+  description?: string
   status: TaskStatus
-  createdAt: string // ISO timestamp
+  createdAt: string
+  gitUrl?: string
+  jiraUrl?: string
+  externalLinks?: string[]
 }

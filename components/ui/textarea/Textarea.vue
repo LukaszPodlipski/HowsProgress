@@ -7,6 +7,7 @@ const props = defineProps<{
   class?: HTMLAttributes['class']
   defaultValue?: string | number
   modelValue?: string | number
+  rows?: number
 }>()
 
 const emits = defineEmits<{
@@ -29,5 +30,6 @@ const modelValue = useVModel(props, 'modelValue', emits, {
         props.class
       )
     "
+    :rows="rows"
   />
 </template>

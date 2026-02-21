@@ -1,5 +1,5 @@
 import type { Task } from '@/types'
-import { TaskStatus } from '@/types/enums'
+import type { TaskForm } from '@/components/tasks/TaskInput.vue'
 
 const STORAGE_KEY = 'how-is-your-progress-tasks'
 
@@ -12,14 +12,24 @@ export const useTasks = () => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (!stored) return []
-      tasks.value = JSON.parse(stored) as Task[]
+      const parsed = JSON.parse(stored) as (Task & { text?: string })[]
+      tasks.value = parsed.map(t => ({
+        id: t.id,
+        title: t.title ?? t.text ?? '',
+        description: t.description,
+        status: t.status,
+        createdAt: t.createdAt,
+        gitUrl: t.gitUrl,
+        jiraUrl: t.jiraUrl,
+        externalLinks: t.externalLinks,
+      }))
     } catch (error) {
       console.error('Błąd podczas odczytu zadań:', error)
       return []
     }
   }
 
-  const saveTasks = (tasks: Task[]): void => {
+  const saveTasksLocalStorage = (tasks: Task[]): void => {
     if (typeof window === 'undefined') return
 
     try {
@@ -29,23 +39,28 @@ export const useTasks = () => {
     }
   }
 
-  const addTask = (text: string): Task => {
+  const addTask = (taskForm: TaskForm): Task => {
     const task: Task = {
       id: crypto.randomUUID(),
-      text: text.trim(),
-      status: TaskStatus.COMPLETED,
+      title: taskForm.title.trim(),
+      description: taskForm.description,
+      status: taskForm.taskStatus,
       createdAt: new Date().toISOString(),
+      gitUrl: taskForm.gitUrl,
+      jiraUrl: taskForm.jiraUrl,
+      externalLinks: taskForm.externalLinks?.length ? taskForm.externalLinks : undefined,
     }
 
     tasks.value.push(task)
-    saveTasks(tasks.value)
+    saveTasksLocalStorage(tasks.value)
 
     return task
   }
 
   const removeTask = (id: string): void => {
     const filtered = tasks.value.filter(task => task.id !== id)
-    saveTasks(filtered)
+    tasks.value = filtered
+    saveTasksLocalStorage(filtered)
   }
 
   return {

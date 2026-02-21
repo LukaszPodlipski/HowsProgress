@@ -3,7 +3,8 @@ import { useTasks } from '@/composables/useTasks'
 import { useWindowSize } from '@vueuse/core'
 import TaskItem from './TaskItem.vue'
 
-const { tasks } = useTasks()
+const { tasks, removeTask } = useTasks()
+const { height: windowHeight } = useWindowSize()
 
 const taskRefs = ref<Map<string, HTMLElement>>(new Map())
 const listContainer = ref<HTMLElement | null>(null)
@@ -72,26 +73,65 @@ const updateFocus = () => {
   focusIndex.value = foundFirstVisible ? firstVisibleIndex : 0
 }
 
+/* ------------------------- Handling input block height ----------------------------------- */
+let resizeObserver: ResizeObserver | null = null
+const inputBlockHeight = ref(0)
+
+onMounted(() => {
+  const el = getInputElement()
+
+  if (!el) return
+
+  inputBlockHeight.value = (el as HTMLElement).offsetHeight
+  resizeObserver = new ResizeObserver(entries => {
+    const entry = entries[0]
+    if (entry) inputBlockHeight.value = entry.contentRect.height
+  })
+  resizeObserver.observe(el)
+})
+
+onUnmounted(() => {
+  resizeObserver?.disconnect()
+})
+
+watch(
+  () => windowHeight.value,
+
+  () => {
+    updateFocus()
+  }
+)
+
 /* ------------------------- SCROLLING UTILS ----------------------------------- */
+const getInputElement = (): Element | null => {
+  return (
+    document.querySelector('.scroll-list__input') ??
+    listContainer.value?.parentElement?.parentElement?.parentElement?.querySelector(
+      '.scroll-list__input'
+    ) ??
+    null
+  )
+}
+
+const scrollListHeigth = computed(() => {
+  const PADDING_HEIGHT = 32
+
+  if (inputBlockHeight.value === 0) {
+    const el = getInputElement()
+    if (el) return windowHeight.value - (el as HTMLElement).clientHeight - PADDING_HEIGHT
+    return 100
+  }
+
+  return windowHeight.value - inputBlockHeight.value - PADDING_HEIGHT
+})
+
 const scrollToBottom = () => {
   if (listContainer.value) {
     listContainer.value.scrollTop = listContainer.value.scrollHeight
   }
 }
 
-const { height } = useWindowSize()
-
-const scrollListHeigth = computed(() => {
-  const inputElement =
-    document.querySelector('.scroll-list__input') ||
-    (listContainer.value?.parentElement?.querySelector('.scroll-list__input') ?? null)
-  if (!inputElement) return 100
-  return height.value - inputElement.clientHeight - 32
-})
-
-defineExpose({
-  scrollToBottom,
-})
+defineExpose({ scrollToBottom })
 </script>
 
 <template>
@@ -114,7 +154,7 @@ defineExpose({
               'item-visible': visibleTaskIds.has(task.id),
             }"
           >
-            <TaskItem :task="task" />
+            <TaskItem :task="task" @remove="removeTask" />
           </li>
         </ul>
       </div>
