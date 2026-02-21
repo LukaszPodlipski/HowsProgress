@@ -21,3 +21,9 @@ logs
 # Tauri
 src-tauri/target
 
+# Claude Code
+.claude/settings.local.json
+
+# AI agent skills
+.agents/
+

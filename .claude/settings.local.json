@@ -7,7 +7,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:github.com)",
       "WebSearch",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(grep error:*)",
+      "Bash(grep ✖:*)"
     ]
   }
 }
