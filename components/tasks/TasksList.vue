@@ -14,12 +14,15 @@ const { tasks, removeTask, restoreTask, updateTask } = useTasks()
 const editingTask = ref<Task | null>(null)
 const isEditModalOpen = ref(false)
 
-const editSourceWidth = ref<number | undefined>(undefined)
+const editSourceEl = ref<HTMLElement | null>(null)
+const editSourceWidth = computed(() => {
+  if (!editSourceEl.value) return undefined
+  return Math.min(editSourceEl.value.getBoundingClientRect().width, windowWidth.value - 16)
+})
 
 const handleEditTask = (taskId: string) => {
   editingTask.value = tasks.value.find(t => t.id === taskId) ?? null
-  const el = taskRefs.value.get(taskId)
-  editSourceWidth.value = el ? el.getBoundingClientRect().width : undefined
+  editSourceEl.value = taskRefs.value.get(taskId) ?? null
   isEditModalOpen.value = true
 }
 
@@ -28,7 +31,7 @@ const handleModalOpenChange = (open: boolean) => {
   if (!open) {
     setTimeout(() => {
       editingTask.value = null
-      editSourceWidth.value = undefined
+      editSourceEl.value = null
     }, 250)
   }
 }
@@ -43,12 +46,15 @@ const handleSaveTask = (form: TaskForm) => {
 const previewTask = ref<Task | null>(null)
 const isPreviewModalOpen = ref(false)
 
-const previewSourceWidth = ref<number | undefined>(undefined)
+const previewSourceEl = ref<HTMLElement | null>(null)
+const previewSourceWidth = computed(() => {
+  if (!previewSourceEl.value) return undefined
+  return Math.min(previewSourceEl.value.getBoundingClientRect().width, windowWidth.value - 16)
+})
 
 const handlePreviewTask = (taskId: string) => {
   previewTask.value = tasks.value.find(t => t.id === taskId) ?? null
-  const el = taskRefs.value.get(taskId)
-  previewSourceWidth.value = el ? el.getBoundingClientRect().width : undefined
+  previewSourceEl.value = taskRefs.value.get(taskId) ?? null
   isPreviewModalOpen.value = true
 }
 
@@ -57,7 +63,7 @@ const handlePreviewModalOpenChange = (open: boolean) => {
   if (!open) {
     setTimeout(() => {
       previewTask.value = null
-      previewSourceWidth.value = undefined
+      previewSourceEl.value = null
     }, 250)
   }
 }
@@ -93,7 +99,7 @@ const handleRemoveTask = (taskId: string) => {
     },
   })
 }
-const { height: windowHeight } = useWindowSize()
+const { width: windowWidth, height: windowHeight } = useWindowSize()
 
 const taskRefs = ref<Map<string, HTMLElement>>(new Map())
 const listContainer = ref<HTMLElement | null>(null)
