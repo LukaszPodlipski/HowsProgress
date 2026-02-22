@@ -8,7 +8,7 @@ import TaskPreviewModal from './TaskPreviewModal.vue'
 import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
 
-const { tasks, removeTask, restoreTask, updateTask } = useTasks()
+const { tasks, removeTask, restoreTask, updateTask, reorderTask } = useTasks()
 
 /* ------------------------- EDIT MODAL ----------------------------------- */
 const editingTask = ref<Task | null>(null)
@@ -76,6 +76,98 @@ const handlePreviewEdit = (taskId: string) => {
 const handlePreviewRemove = (taskId: string) => {
   handlePreviewModalOpenChange(false)
   handleRemoveTask(taskId)
+}
+
+/* ------------------------- DRAG AND DROP ----------------------------------- */
+let canDrag = false
+const draggedTaskId = ref<string | null>(null)
+const dragOverTaskId = ref<string | null>(null)
+const dragOverPosition = ref<'before' | 'after'>('after')
+
+// Auto-scroll
+let autoScrollRaf: number | null = null
+let autoScrollSpeed = 0
+const SCROLL_ZONE = 80
+const MAX_SCROLL_SPEED = 15
+
+const updateAutoScroll = (event: DragEvent) => {
+  if (!listContainer.value) return
+  const rect = listContainer.value.getBoundingClientRect()
+  const distFromTop = event.clientY - rect.top
+  const distFromBottom = rect.bottom - event.clientY
+
+  if (distFromTop < SCROLL_ZONE && distFromTop > 0) {
+    autoScrollSpeed = -((SCROLL_ZONE - distFromTop) / SCROLL_ZONE) * MAX_SCROLL_SPEED
+  } else if (distFromBottom < SCROLL_ZONE && distFromBottom > 0) {
+    autoScrollSpeed = ((SCROLL_ZONE - distFromBottom) / SCROLL_ZONE) * MAX_SCROLL_SPEED
+  } else {
+    autoScrollSpeed = 0
+  }
+
+  if (autoScrollSpeed !== 0 && autoScrollRaf === null) {
+    const tick = () => {
+      if (!listContainer.value || autoScrollSpeed === 0) {
+        stopAutoScroll()
+        return
+      }
+      listContainer.value.scrollBy({ top: autoScrollSpeed, behavior: 'instant' })
+      autoScrollRaf = requestAnimationFrame(tick)
+    }
+    autoScrollRaf = requestAnimationFrame(tick)
+  } else if (autoScrollSpeed === 0) {
+    stopAutoScroll()
+  }
+}
+
+const stopAutoScroll = () => {
+  if (autoScrollRaf !== null) {
+    cancelAnimationFrame(autoScrollRaf)
+    autoScrollRaf = null
+  }
+  autoScrollSpeed = 0
+}
+
+const handleHandlePointerdown = () => {
+  canDrag = true
+}
+
+const handleDragStart = (taskId: string, event: DragEvent) => {
+  if (!canDrag) {
+    event.preventDefault()
+    return
+  }
+  draggedTaskId.value = taskId
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', taskId)
+  }
+}
+
+const handleDragOver = (taskId: string, event: DragEvent) => {
+  updateAutoScroll(event)
+  if (!draggedTaskId.value || taskId === draggedTaskId.value) return
+  const el = taskRefs.value.get(taskId)
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  dragOverTaskId.value = taskId
+  dragOverPosition.value = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+}
+
+const handleDrop = (taskId: string) => {
+  if (!draggedTaskId.value || taskId === draggedTaskId.value) return
+  const fromIndex = tasks.value.findIndex(t => t.id === draggedTaskId.value)
+  const overIndex = tasks.value.findIndex(t => t.id === taskId)
+  if (fromIndex === -1 || overIndex === -1) return
+  let toIndex = dragOverPosition.value === 'after' ? overIndex + 1 : overIndex
+  if (fromIndex < toIndex) toIndex -= 1
+  reorderTask(fromIndex, toIndex)
+}
+
+const handleDragEnd = () => {
+  canDrag = false
+  draggedTaskId.value = null
+  dragOverTaskId.value = null
+  stopAutoScroll()
 }
 
 /* ------------------------- REMOVE TASK ----------------------------------- */
@@ -237,23 +329,36 @@ defineExpose({ scrollToBottom })
         class="scroll-list__wrp js-scroll-content js-scroll-list"
         :style="{ height: scrollListHeigth + 'px' }"
         @scroll.passive="updateFocus"
+        @dragover="updateAutoScroll($event)"
       >
         <ul class="scroll-list__list">
           <li
             v-for="(task, index) in tasks"
             :key="task.id"
             :ref="el => setTaskRef(el as HTMLElement, task.id)"
-            class="scroll-list__item js-scroll-list-item"
+            class="scroll-list__item js-scroll-list-item relative"
             :class="{
               'item-focus': index === focusIndex,
               'item-visible': visibleTaskIds.has(task.id),
             }"
+            draggable="true"
+            @dragstart="handleDragStart(task.id, $event)"
+            @dragover.prevent="handleDragOver(task.id, $event)"
+            @drop.prevent="handleDrop(task.id)"
+            @dragend="handleDragEnd"
           >
+            <div
+              v-if="dragOverTaskId === task.id"
+              class="absolute inset-x-0 h-0.5 bg-primary rounded-full z-10"
+              :class="dragOverPosition === 'before' ? 'top-[-8px]' : 'bottom-[-9px]'"
+            />
             <TaskItem
               :task="task"
+              :dragging="draggedTaskId === task.id"
               @remove="handleRemoveTask"
               @edit="handleEditTask"
               @preview="handlePreviewTask"
+              @handle-pointerdown="handleHandlePointerdown"
             />
           </li>
         </ul>

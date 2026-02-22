@@ -44,6 +44,10 @@
   outline: none !important;
 }
 
+@utility wrap-break-word {
+  word-break: break-word;
+}
+
 @layer base {
   /* ------------------------- MAIN STYLES ----------------------------------- */
   * {

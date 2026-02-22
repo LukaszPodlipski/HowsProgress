@@ -80,6 +80,15 @@ export const useTasks = () => {
     saveTasksLocalStorage(tasks.value)
   }
 
+  const reorderTask = (fromIndex: number, toIndex: number): void => {
+    if (fromIndex === toIndex) return
+    const arr = [...tasks.value]
+    const [item] = arr.splice(fromIndex, 1)
+    if (item) arr.splice(toIndex, 0, item)
+    tasks.value = arr
+    saveTasksLocalStorage(tasks.value)
+  }
+
   const restoreTask = (task: Task, index?: number): void => {
     if (typeof index === 'number' && index >= 0 && index <= tasks.value.length) {
       tasks.value.splice(index, 0, task)
@@ -95,6 +104,7 @@ export const useTasks = () => {
     updateTask,
     removeTask,
     restoreTask,
+    reorderTask,
     tasks,
   }
 }

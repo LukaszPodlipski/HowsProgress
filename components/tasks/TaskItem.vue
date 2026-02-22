@@ -10,22 +10,24 @@ const props = withDefaults(
     task: Task
     class?: HTMLAttributes['class']
     clickable?: boolean
+    dragging?: boolean
     /** When true, description is always fully visible (no "show more/less") */
     descriptionAlwaysExpanded?: boolean
-    /** When true, shows a close (X) button next to edit/remove actions (e.g. in preview modal) */
-    showCloseButton?: boolean
+    /** When true, task is embedded (e.g. in preview modal): close button instead of drag handle, actions always visible */
+    embedded?: boolean
   }>(),
   {
     clickable: true,
+    dragging: false,
     descriptionAlwaysExpanded: false,
-    showCloseButton: false,
+    embedded: false,
     class: '',
   }
 )
 
 const emit = defineEmits<{
   (e: 'remove' | 'edit' | 'preview', taskId: string): void
-  (e: 'close'): void
+  (e: 'close' | 'handle-pointerdown'): void
 }>()
 
 const isExpanded = ref(false)
@@ -59,34 +61,39 @@ const hasLinks = computed(
     variant="outline"
     class="relative bg-card transition-colors select-none"
     :class="[
-      ,
       props.clickable && 'cursor-pointer hover:border-accent active:bg-accent/60',
+      props.dragging && 'opacity-40',
       props.class,
     ]"
     @click="props.clickable && emit('preview', task.id)"
   >
     <ItemContent>
       <div class="flex items-start justify-between">
-        <ItemTitle>
+        <ItemTitle class="min-w-0">
           <Icon
             :icon="
               task.status === TaskStatus.COMPLETED
                 ? 'lets-icons:done-duotone'
                 : 'lets-icons:clock-duotone'
             "
-            class="size-4"
+            class="size-4 shrink-0"
             :class="[task.status === TaskStatus.COMPLETED ? 'text-green-500' : 'text-yellow-500']"
           />
-          {{ task.title }}
+          <span class="min-w-0 wrap-break-word text-balance">{{ task.title }}</span>
         </ItemTitle>
         <div
           class="flex items-center gap-0.5 transition-opacity"
-          :class="
-            props.showCloseButton
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/item:opacity-100 pointer-events-none'
-          "
+          :class="props.embedded ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100 '"
         >
+          <button
+            v-if="!props.embedded"
+            type="button"
+            class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-grab active:cursor-grabbing"
+            aria-label="Przeciągnij zadanie"
+            @pointerdown.stop="emit('handle-pointerdown')"
+          >
+            <Icon icon="lucide:grip-vertical" class="size-3.5" />
+          </button>
           <button
             type="button"
             class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
@@ -104,7 +111,7 @@ const hasLinks = computed(
             <Icon icon="lucide:trash-2" class="size-3.5" />
           </button>
           <button
-            v-if="props.showCloseButton"
+            v-if="props.embedded"
             type="button"
             class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
             aria-label="Zamknij"
@@ -127,7 +134,7 @@ const hasLinks = computed(
         >
           <p
             ref="descriptionRef"
-            class="text-sm text-muted-foreground leading-normal whitespace-pre-wrap wrap-break-word"
+            class="text-sm text-muted-foreground leading-normal whitespace-pre-wrap wrap-break-word text-balance"
           >
             {{ task.description }}
           </p>

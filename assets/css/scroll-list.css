@@ -75,7 +75,7 @@
 .scroll-list__item {
   width: 100%;
   display: block;
-  margin-bottom: 15px;
+  padding-bottom: 15px;
   border-radius: 8px;
   transition: all 0.35s ease-in-out;
   opacity: 0;

@@ -61,7 +61,7 @@ const {
         v-model="title"
         v-bind="titleAttrs"
         placeholder="Tytuł zadania..."
-        class="pb-2!"
+        class="pb-2! pr-10"
         :rows="1"
         :maxlength="100"
         :class="{
@@ -83,7 +83,7 @@ const {
           placeholder="Opis (opcjonalnie)..."
           data-slot="input-group-control"
           :maxlength="1000"
-          class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/25"
+          class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/50"
           :class="{
             'aria-invalid': errors.description,
             'max-h-[calc(100dvh-22rem)] overflow-y-auto': fillHeight,
