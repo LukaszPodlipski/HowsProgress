@@ -18,7 +18,9 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="relative flex w-full items-center gap-1">
+  <div
+    class="relative flex w-full items-center gap-1 transition-colors has-[>input:focus-visible]:bg-accent/25"
+  >
     <Icon
       :name="icon"
       class="size-4 shrink-0 ml-3"

@@ -59,12 +59,13 @@ const {
         v-model="title"
         v-bind="titleAttrs"
         placeholder="Tytuł zadania..."
-        class="pb-0!"
+        class="pb-2!"
         :rows="1"
         :maxlength="100"
         :class="{
           'aria-invalid': errors.title,
           'min-h-7': hasExtendedContent,
+          'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
         }"
       />
 
@@ -75,7 +76,7 @@ const {
           placeholder="Opis (opcjonalnie)..."
           data-slot="input-group-control"
           :maxlength="1000"
-          class="min-h-20 w-full pr-8 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent"
+          class="min-h-20 w-full pr-8 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/25"
           :class="{ 'aria-invalid': errors.description }"
         />
         <button
@@ -157,7 +158,7 @@ const {
                 class="size-4"
                 :class="[selectedTaskStatus!.iconColor]"
               />
-              {{ selectedTaskStatus!.label }}
+              <span class="pr-1">{{ selectedTaskStatus!.label }}</span>
             </InputGroupButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -180,9 +181,11 @@ const {
         <InputGroupText v-if="hasDescriptionElement" class="ml-auto">
           {{ (description ?? '').length }} / 1000
         </InputGroupText>
-        <Separator orientation="vertical" class="h-4!" />
-        <div>
-          <slot name="submit" :is-submit-disabled="isSubmitDisabled" />
+        <div class="flex items-center gap-2" :class="{ 'ml-auto': !hasDescriptionElement }">
+          <Separator v-if="hasDescriptionElement" orientation="vertical" class="h-4!" />
+          <div>
+            <slot name="submit" :is-submit-disabled="isSubmitDisabled" />
+          </div>
         </div>
       </InputGroupAddon>
     </InputGroup>
