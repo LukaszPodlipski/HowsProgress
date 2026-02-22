@@ -9,7 +9,8 @@
       "WebSearch",
       "Bash(grep:*)",
       "Bash(grep error:*)",
-      "Bash(grep ✖:*)"
+      "Bash(grep ✖:*)",
+      "Bash(cd:*)"
     ]
   }
 }

@@ -7,8 +7,10 @@ import TaskEditModal from './TaskEditModal.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
 import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
+import { useI18n } from 'vue-i18n'
 
 const { tasks, removeTask, restoreTask, updateTask, reorderTask } = useTasks()
+const { t } = useI18n()
 
 /* ------------------------- EDIT MODAL ----------------------------------- */
 const editingTask = ref<Task | null>(null)
@@ -178,9 +180,9 @@ const handleRemoveTask = (taskId: string) => {
 
   removeTask(taskId)
 
-  toast('Zadanie usunięte', {
+  toast(t('task.deleted'), {
     action: {
-      label: 'Cofnij',
+      label: t('task.undo'),
       onClick: () => {
         restoreTask(task, index)
         nextTick(() => {

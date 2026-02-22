@@ -2,17 +2,18 @@ import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import { AddElementType, TaskStatus } from '@/types/enums'
+import { useI18n } from 'vue-i18n'
 
-const urlSchema = z.string().url('Wprowadź prawidłowy adres URL')
-const optionalUrlSchema = z.union([z.literal(''), urlSchema]).optional()
+// Strukturalny schemat używany wyłącznie do inferencji typu TaskForm
+const _optionalUrl = z.union([z.literal(''), z.string().url()]).optional()
 
 export const taskFormSchema = z.object({
-  title: z.string().max(100, 'Tytuł nie może przekraczać 100 znaków'),
-  description: z.string().max(1000, 'Opis nie może przekraczać 1000 znaków').optional(),
+  title: z.string().max(100),
+  description: z.string().max(1000).optional(),
   taskStatus: z.nativeEnum(TaskStatus),
-  gitUrl: optionalUrlSchema,
-  jiraUrl: optionalUrlSchema,
-  externalUrl: optionalUrlSchema,
+  gitUrl: _optionalUrl,
+  jiraUrl: _optionalUrl,
+  externalUrl: _optionalUrl,
 })
 
 export type TaskForm = z.infer<typeof taskFormSchema>
@@ -25,32 +26,6 @@ const INITIAL_VALUES: TaskForm = {
   jiraUrl: '',
   externalUrl: '',
 }
-
-export const TASK_STATUS_OPTIONS = [
-  {
-    label: 'Completed',
-    icon: 'lets-icons:done-duotone',
-    iconColor: 'text-green-500',
-    value: TaskStatus.COMPLETED,
-  },
-  {
-    label: 'In progress',
-    icon: 'lets-icons:clock-duotone',
-    iconColor: 'text-yellow-500',
-    value: TaskStatus.IN_PROGRESS,
-  },
-] as const
-
-export const ADD_ELEMENT_OPTIONS: ReadonlyArray<{
-  type: AddElementType
-  label: string
-  icon: string
-}> = [
-  { type: AddElementType.DESCRIPTION, label: 'Opis', icon: 'lucide:align-left' },
-  { type: AddElementType.GIT, label: 'Link repozytorium Git', icon: 'lucide:git-branch' },
-  { type: AddElementType.JIRA, label: 'Link Jira', icon: 'simple-icons:jira' },
-  { type: AddElementType.EXTERNAL, label: 'Zewnętrzny link', icon: 'lucide:external-link' },
-]
 
 function normalizeSubmitPayload(values: TaskForm): TaskForm {
   return {
@@ -66,10 +41,58 @@ export function useTaskForm(
   onSubmitCallback: (form: TaskForm) => void,
   initial?: Partial<TaskForm>
 ) {
+  const { t } = useI18n()
+
+  const urlSchema = z.string().url(t('validation.invalidUrl'))
+  const optionalUrlSchema = z.union([z.literal(''), urlSchema]).optional()
+
+  const schema = z.object({
+    title: z.string().max(100, t('validation.titleMaxLength')),
+    description: z.string().max(1000, t('validation.descriptionMaxLength')).optional(),
+    taskStatus: z.nativeEnum(TaskStatus),
+    gitUrl: optionalUrlSchema,
+    jiraUrl: optionalUrlSchema,
+    externalUrl: optionalUrlSchema,
+  })
+
+  const TASK_STATUS_OPTIONS = [
+    {
+      label: t('task.statusCompleted'),
+      icon: 'lets-icons:done-duotone',
+      iconColor: 'text-green-500',
+      value: TaskStatus.COMPLETED,
+    },
+    {
+      label: t('task.statusInProgress'),
+      icon: 'lets-icons:clock-duotone',
+      iconColor: 'text-yellow-500',
+      value: TaskStatus.IN_PROGRESS,
+    },
+  ] as const
+
+  const ADD_ELEMENT_OPTIONS: ReadonlyArray<{
+    type: AddElementType
+    label: string
+    icon: string
+  }> = [
+    {
+      type: AddElementType.DESCRIPTION,
+      label: t('task.elementDescription'),
+      icon: 'lucide:align-left',
+    },
+    { type: AddElementType.GIT, label: t('task.elementGit'), icon: 'lucide:git-branch' },
+    { type: AddElementType.JIRA, label: t('task.elementJira'), icon: 'simple-icons:jira' },
+    {
+      type: AddElementType.EXTERNAL,
+      label: t('task.elementExternal'),
+      icon: 'lucide:external-link',
+    },
+  ]
+
   const startValues: TaskForm = { ...INITIAL_VALUES, ...initial }
 
   const { handleSubmit, defineField, errors } = useForm<TaskForm>({
-    validationSchema: toTypedSchema(taskFormSchema),
+    validationSchema: toTypedSchema(schema),
     initialValues: startValues,
   })
 

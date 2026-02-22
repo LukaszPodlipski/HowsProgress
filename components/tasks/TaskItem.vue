@@ -4,6 +4,7 @@ import { TaskStatus } from '@/types/enums'
 import { Icon } from '@iconify/vue'
 import type { HTMLAttributes } from 'vue'
 import type { Task } from '@/types'
+import { useI18n } from 'vue-i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -29,6 +30,8 @@ const emit = defineEmits<{
   (e: 'remove' | 'edit' | 'preview', taskId: string): void
   (e: 'close' | 'handle-pointerdown'): void
 }>()
+
+const { t } = useI18n()
 
 const isExpanded = ref(false)
 const descriptionRef = ref<HTMLElement | null>(null)
@@ -90,7 +93,7 @@ const hasLinks = computed(
             v-if="!props.embedded"
             type="button"
             class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-grab active:cursor-grabbing"
-            aria-label="Przeciągnij zadanie"
+            :aria-label="t('task.dragHandleAriaLabel')"
             @pointerdown.stop="emit('handle-pointerdown')"
           >
             <Icon icon="lucide:grip-vertical" class="size-3.5" />
@@ -98,7 +101,7 @@ const hasLinks = computed(
           <button
             type="button"
             class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
-            aria-label="Edytuj zadanie"
+            :aria-label="t('task.editAriaLabel')"
             @click.stop="emit('edit', task.id)"
           >
             <Icon icon="lucide:pencil" class="size-3.5" />
@@ -106,7 +109,7 @@ const hasLinks = computed(
           <button
             type="button"
             class="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
-            aria-label="Usuń zadanie"
+            :aria-label="t('task.removeAriaLabel')"
             @click.stop="emit('remove', task.id)"
           >
             <Icon icon="lucide:trash-2" class="size-3.5" />
@@ -115,7 +118,7 @@ const hasLinks = computed(
             v-if="props.embedded"
             type="button"
             class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
-            aria-label="Zamknij"
+            :aria-label="t('task.closeAriaLabel')"
             @click.stop="emit('close')"
           >
             <Icon icon="lucide:minimize" class="size-4" />
@@ -191,7 +194,7 @@ const hasLinks = computed(
           @click.stop="isExpanded = !isExpanded"
         >
           <Icon :icon="isExpanded ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="size-3" />
-          {{ isExpanded ? 'Pokaż mniej' : 'Pokaż więcej' }}
+          {{ isExpanded ? t('task.showLess') : t('task.showMore') }}
         </button>
       </div>
     </ItemContent>

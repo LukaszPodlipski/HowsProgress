@@ -1,0 +1,36 @@
+{
+  "task": {
+    "titlePlaceholder": "Tytuł zadania...",
+    "descriptionPlaceholder": "Opis (opcjonalnie)...",
+    "send": "Wyślij",
+    "save": "Zapisz",
+    "editModalTitle": "Edytuj zadanie",
+    "dragHandleAriaLabel": "Przeciągnij zadanie",
+    "editAriaLabel": "Edytuj zadanie",
+    "removeAriaLabel": "Usuń zadanie",
+    "closeAriaLabel": "Zamknij",
+    "showMore": "Pokaż więcej",
+    "showLess": "Pokaż mniej",
+    "deleted": "Zadanie usunięte",
+    "undo": "Cofnij",
+    "addElementAriaLabel": "Dodaj element do zadania",
+    "statusCompleted": "Ukończone",
+    "statusInProgress": "W trakcie",
+    "elementDescription": "Opis",
+    "elementGit": "Link repozytorium Git",
+    "elementJira": "Link Jira",
+    "elementExternal": "Zewnętrzny link",
+    "removeDescriptionAriaLabel": "Usuń opis",
+    "removeGitAriaLabel": "Usuń link Git",
+    "removeJiraAriaLabel": "Usuń link Jira",
+    "removeExternalAriaLabel": "Usuń zewnętrzny link",
+    "gitUrlPlaceholder": "URL repozytorium Git...",
+    "jiraUrlPlaceholder": "URL Jira...",
+    "externalUrlPlaceholder": "Zewnętrzny URL..."
+  },
+  "validation": {
+    "invalidUrl": "Wprowadź prawidłowy adres URL",
+    "titleMaxLength": "Tytuł nie może przekraczać 100 znaków",
+    "descriptionMaxLength": "Opis nie może przekraczać 1000 znaków"
+  }
+}

@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import TaskFormFields from './TaskFormFields.vue'
 import { useTaskForm, type TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   task: Task
@@ -17,6 +18,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
   (e: 'save', form: TaskForm): void
 }>()
+
+const { t } = useI18n()
 
 const form = useTaskForm(
   f => {
@@ -45,7 +48,7 @@ const form = useTaskForm(
       ]"
     >
       <DialogHeader class="shrink-0">
-        <DialogTitle>Edytuj zadanie</DialogTitle>
+        <DialogTitle>{{ t('task.editModalTitle') }}</DialogTitle>
       </DialogHeader>
       <div class="flex flex-col flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-1">
         <TaskFormFields :form="form" fill-height>
@@ -58,7 +61,7 @@ const form = useTaskForm(
               :disabled="isSubmitDisabled"
             >
               <CheckIcon class="size-3.5" />
-              Zapisz
+              {{ t('task.save') }}
             </InputGroupButton>
           </template>
         </TaskFormFields>

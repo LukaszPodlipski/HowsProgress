@@ -17,11 +17,14 @@ import { PlusIcon } from 'lucide-vue-next'
 import { Textarea } from '@/components/ui/textarea'
 import TaskInputUrlRow from './TaskInputUrlRow.vue'
 import type { useTaskForm } from '@/composables/useTaskForm'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   form: ReturnType<typeof useTaskForm>
   fillHeight?: boolean
 }>()
+
+const { t } = useI18n()
 
 const {
   handleSubmit,
@@ -60,7 +63,7 @@ const {
       <InputGroupTextarea
         v-model="title"
         v-bind="titleAttrs"
-        placeholder="Tytuł zadania..."
+        :placeholder="t('task.titlePlaceholder')"
         class="pb-2! pr-10"
         :rows="1"
         :maxlength="100"
@@ -80,7 +83,7 @@ const {
         <Textarea
           v-model="description"
           v-bind="descriptionAttrs"
-          placeholder="Opis (opcjonalnie)..."
+          :placeholder="t('task.descriptionPlaceholder')"
           data-slot="input-group-control"
           :maxlength="1000"
           class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/50"
@@ -92,7 +95,7 @@ const {
         <button
           type="button"
           class="absolute top-1 right-2 z-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer w-[24px] h-[24px]"
-          aria-label="Usuń opis"
+          :aria-label="t('task.removeDescriptionAriaLabel')"
           tabindex="0"
           @click="hasDescriptionElement = false"
         >
@@ -103,10 +106,10 @@ const {
       <TaskInputUrlRow
         v-if="hasGitElement"
         icon="lucide:git-branch"
-        placeholder="URL repozytorium Git..."
+        :placeholder="t('task.gitUrlPlaceholder')"
         :model-value="gitUrl ?? ''"
         :invalid="!!errors.gitUrl"
-        remove-aria-label="Usuń link Git"
+        :remove-aria-label="t('task.removeGitAriaLabel')"
         :input-attrs="gitUrlAttrs"
         @update:model-value="gitUrl = $event"
         @remove="removeGitElement()"
@@ -115,10 +118,10 @@ const {
       <TaskInputUrlRow
         v-if="hasJiraElement"
         icon="simple-icons:jira"
-        placeholder="URL Jira..."
+        :placeholder="t('task.jiraUrlPlaceholder')"
         :model-value="jiraUrl ?? ''"
         :invalid="!!errors.jiraUrl"
-        remove-aria-label="Usuń link Jira"
+        :remove-aria-label="t('task.removeJiraAriaLabel')"
         :input-attrs="jiraUrlAttrs"
         @update:model-value="jiraUrl = $event"
         @remove="removeJiraElement()"
@@ -127,10 +130,10 @@ const {
       <TaskInputUrlRow
         v-if="hasExternalElement"
         icon="lucide:external-link"
-        placeholder="Zewnętrzny URL..."
+        :placeholder="t('task.externalUrlPlaceholder')"
         :model-value="externalUrl ?? ''"
         :invalid="!!errors.externalUrl"
-        remove-aria-label="Usuń zewnętrzny link"
+        :remove-aria-label="t('task.removeExternalAriaLabel')"
         :input-attrs="externalUrlAttrs"
         @update:model-value="externalUrl = $event"
         @remove="removeExternalElement()"
@@ -141,7 +144,7 @@ const {
           <DropdownMenuTrigger as-child>
             <InputGroupButton variant="outline" class="rounded-full" size="icon-xs">
               <PlusIcon class="size-4" />
-              <span class="sr-only">Dodaj element do zadania</span>
+              <span class="sr-only">{{ t('task.addElementAriaLabel') }}</span>
             </InputGroupButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image', '@nuxt/icon'],
+  modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image', '@nuxt/icon', '@nuxtjs/i18n'],
   compatibilityDate: '2024-04-03',
   ssr: false,
 
@@ -20,7 +20,11 @@ export default defineNuxtConfig({
   css: ['@/assets/css/tailwind.css', '@/assets/css/scroll-list.css', 'vue-sonner/style.css'],
 
   vite: {
-    plugins: [tailwindcss()],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    plugins: tailwindcss() as any,
+    // TS2322: @tailwindcss/vite and Nuxt resolve different copies of rollup,
+    // causing incompatible Plugin<any> types (PluginContextMeta.viteVersion mismatch).
+    // Cast is safe — no runtime impact.
   },
 
   shadcn: {
@@ -45,5 +49,12 @@ export default defineNuxtConfig({
   icon: {
     mode: 'css',
     cssLayer: 'base',
+  },
+
+  i18n: {
+    defaultLocale: 'pl',
+    locales: [{ code: 'pl', language: 'pl-PL', file: 'pl.json' }],
+    langDir: 'locales',
+    restructureDir: 'i18n',
   },
 })
