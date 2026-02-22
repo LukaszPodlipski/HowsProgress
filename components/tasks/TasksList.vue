@@ -4,6 +4,7 @@ import { useWindowSize } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
 import TaskEditModal from './TaskEditModal.vue'
+import TaskPreviewModal from './TaskPreviewModal.vue'
 import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
 
@@ -13,8 +14,12 @@ const { tasks, removeTask, restoreTask, updateTask } = useTasks()
 const editingTask = ref<Task | null>(null)
 const isEditModalOpen = ref(false)
 
+const editSourceWidth = ref<number | undefined>(undefined)
+
 const handleEditTask = (taskId: string) => {
   editingTask.value = tasks.value.find(t => t.id === taskId) ?? null
+  const el = taskRefs.value.get(taskId)
+  editSourceWidth.value = el ? el.getBoundingClientRect().width : undefined
   isEditModalOpen.value = true
 }
 
@@ -23,6 +28,7 @@ const handleModalOpenChange = (open: boolean) => {
   if (!open) {
     setTimeout(() => {
       editingTask.value = null
+      editSourceWidth.value = undefined
     }, 250)
   }
 }
@@ -31,6 +37,39 @@ const handleSaveTask = (form: TaskForm) => {
   if (editingTask.value) {
     updateTask(editingTask.value.id, form)
   }
+}
+
+/* ------------------------- PREVIEW MODAL ----------------------------------- */
+const previewTask = ref<Task | null>(null)
+const isPreviewModalOpen = ref(false)
+
+const previewSourceWidth = ref<number | undefined>(undefined)
+
+const handlePreviewTask = (taskId: string) => {
+  previewTask.value = tasks.value.find(t => t.id === taskId) ?? null
+  const el = taskRefs.value.get(taskId)
+  previewSourceWidth.value = el ? el.getBoundingClientRect().width : undefined
+  isPreviewModalOpen.value = true
+}
+
+const handlePreviewModalOpenChange = (open: boolean) => {
+  isPreviewModalOpen.value = open
+  if (!open) {
+    setTimeout(() => {
+      previewTask.value = null
+      previewSourceWidth.value = undefined
+    }, 250)
+  }
+}
+
+const handlePreviewEdit = (taskId: string) => {
+  handlePreviewModalOpenChange(false)
+  handleEditTask(taskId)
+}
+
+const handlePreviewRemove = (taskId: string) => {
+  handlePreviewModalOpenChange(false)
+  handleRemoveTask(taskId)
 }
 
 /* ------------------------- REMOVE TASK ----------------------------------- */
@@ -164,7 +203,7 @@ const getInputElement = (): Element | null => {
 }
 
 const scrollListHeigth = computed(() => {
-  const PADDING_HEIGHT = 32
+  const PADDING_HEIGHT = 44
 
   if (inputBlockHeight.value === 0) {
     const el = getInputElement()
@@ -204,7 +243,12 @@ defineExpose({ scrollToBottom })
               'item-visible': visibleTaskIds.has(task.id),
             }"
           >
-            <TaskItem :task="task" @remove="handleRemoveTask" @edit="handleEditTask" />
+            <TaskItem
+              :task="task"
+              @remove="handleRemoveTask"
+              @edit="handleEditTask"
+              @preview="handlePreviewTask"
+            />
           </li>
         </ul>
       </div>
@@ -218,7 +262,18 @@ defineExpose({ scrollToBottom })
     :key="editingTask.id"
     :task="editingTask"
     :open="isEditModalOpen"
+    :source-width="editSourceWidth"
     @update:open="handleModalOpenChange"
     @save="handleSaveTask"
+  />
+  <TaskPreviewModal
+    v-if="previewTask"
+    :key="previewTask.id"
+    :task="previewTask"
+    :open="isPreviewModalOpen"
+    :source-width="previewSourceWidth"
+    @update:open="handlePreviewModalOpenChange"
+    @edit="handlePreviewEdit"
+    @remove="handlePreviewRemove"
   />
 </template>

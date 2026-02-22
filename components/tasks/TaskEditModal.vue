@@ -9,6 +9,8 @@ import type { Task } from '@/types'
 const props = defineProps<{
   task: Task
   open: boolean
+  /** When set, modal uses this width (e.g. width of the clicked TaskItem) */
+  sourceWidth?: number
 }>()
 
 const emit = defineEmits<{
@@ -34,7 +36,11 @@ const form = useTaskForm(
 
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
-    <DialogContent class="max-w-xl gap-0 p-0">
+    <DialogContent
+      class="gap-0 p-0"
+      :class="{ 'max-w-xl': !sourceWidth }"
+      :style="sourceWidth ? { width: sourceWidth + 'px', maxWidth: sourceWidth + 'px' } : undefined"
+    >
       <DialogHeader>
         <DialogTitle>Edytuj zadanie</DialogTitle>
       </DialogHeader>

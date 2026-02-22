@@ -76,7 +76,7 @@ const {
           placeholder="Opis (opcjonalnie)..."
           data-slot="input-group-control"
           :maxlength="1000"
-          class="min-h-20 w-full pr-8 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/25"
+          class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/25"
           :class="{ 'aria-invalid': errors.description }"
         />
         <button

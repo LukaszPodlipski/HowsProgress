@@ -22,7 +22,7 @@ const toastOptions = computed(() => ({
     toast:
       'toast-with-progress group toast group-[.toaster]:!bg-card group-[.toaster]:!text-card-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
     description: 'group-[.toast]:text-muted-foreground',
-    actionButton: 'group-[.toast]:bg-primary! group-[.toast]:text-primary-foreground!',
+    actionButton: 'group-[.toast]:bg-orange-500/50! group-[.toast]:text-primary-foreground!',
     cancelButton: 'group-[.toast]:bg-secondary! group-[.toast]:text-secondary-foreground!',
   },
 }))
@@ -102,13 +102,14 @@ const toastOptions = computed(() => ({
   left: 0;
   height: 4px;
   width: 100%;
-  background: var(--primary);
+  background: rgb(var(--tw-color-orange-500, 234 88 12));
   border-radius: 0 0 8px 8px;
   animation: toast-progress-shrink 5s linear forwards;
   transform-origin: left;
   z-index: 10;
   pointer-events: none;
 }
+
 @keyframes toast-progress-shrink {
   from {
     width: 100%;

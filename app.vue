@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/sonner'
 
 <template>
   <div class="min-h-screen flex flex-col items-center">
-    <nav class="fixed top-0 left-0 right-0 z-100 p-1">
+    <nav class="fixed top-0 left-0 right-0 z-100 py-1 px-2">
       <div class="flex items-center gap-4 justify-between max-w-4xl mx-auto">
         <NuxtImg src="/logo.png" alt="How's progress?" width="50" height="50" />
         <Avatar class="w-[32px] h-[32px]">
