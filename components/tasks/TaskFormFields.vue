@@ -20,6 +20,7 @@ import type { useTaskForm } from '@/composables/useTaskForm'
 
 const props = defineProps<{
   form: ReturnType<typeof useTaskForm>
+  fillHeight?: boolean
 }>()
 
 const {
@@ -35,26 +36,27 @@ const {
   gitUrlAttrs,
   jiraUrl,
   jiraUrlAttrs,
-  externalLinks,
+  externalUrl,
+  externalUrlAttrs,
   hasDescriptionElement,
   hasGitElement,
   hasJiraElement,
+  hasExternalElement,
   hasExtendedContent,
   taskStatusOptions,
   selectedTaskStatus,
   visibleAddElementOptions,
   onAddElement,
-  removeExternalLink,
-  setExternalLink,
   removeGitElement,
   removeJiraElement,
+  removeExternalElement,
   isSubmitDisabled,
 } = props.form
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit">
-    <InputGroup>
+  <form :class="{ 'flex flex-col flex-1 min-h-0': fillHeight }" @submit.prevent="handleSubmit">
+    <InputGroup :class="{ 'flex-1 min-h-0': fillHeight }">
       <InputGroupTextarea
         v-model="title"
         v-bind="titleAttrs"
@@ -66,10 +68,15 @@ const {
           'aria-invalid': errors.title,
           'min-h-7': hasExtendedContent,
           'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
+          'flex-none': fillHeight,
         }"
       />
 
-      <div v-if="hasDescriptionElement" class="relative w-full">
+      <div
+        v-if="hasDescriptionElement"
+        class="relative w-full"
+        :class="{ 'flex-1 min-h-0': fillHeight }"
+      >
         <Textarea
           v-model="description"
           v-bind="descriptionAttrs"
@@ -77,7 +84,10 @@ const {
           data-slot="input-group-control"
           :maxlength="1000"
           class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/25"
-          :class="{ 'aria-invalid': errors.description }"
+          :class="{
+            'aria-invalid': errors.description,
+            'max-h-[calc(100dvh-22rem)] overflow-y-auto': fillHeight,
+          }"
         />
         <button
           type="button"
@@ -115,15 +125,15 @@ const {
       />
 
       <TaskInputUrlRow
-        v-for="(_, index) in externalLinks ?? []"
-        :key="index"
+        v-if="hasExternalElement"
         icon="lucide:external-link"
         placeholder="Zewnętrzny URL..."
-        :model-value="(externalLinks ?? [])[index] ?? ''"
-        :invalid="!!errors.externalLinks?.[index]"
-        :remove-aria-label="`Usuń zewnętrzny link ${index + 1}`"
-        @update:model-value="setExternalLink(index, $event)"
-        @remove="removeExternalLink(index)"
+        :model-value="externalUrl ?? ''"
+        :invalid="!!errors.externalUrl"
+        remove-aria-label="Usuń zewnętrzny link"
+        :input-attrs="externalUrlAttrs"
+        @update:model-value="externalUrl = $event"
+        @remove="removeExternalElement()"
       />
 
       <InputGroupAddon align="block-end">

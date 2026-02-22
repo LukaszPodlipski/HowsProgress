@@ -29,7 +29,7 @@ const form = useTaskForm(
     taskStatus: props.task.status,
     gitUrl: props.task.gitUrl ?? '',
     jiraUrl: props.task.jiraUrl ?? '',
-    externalLinks: props.task.externalLinks ?? [],
+    externalUrl: props.task.externalUrl ?? '',
   }
 )
 </script>
@@ -37,15 +37,18 @@ const form = useTaskForm(
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
-      class="gap-0 p-0"
+      class="gap-0 p-0 flex flex-col"
       :class="{ 'max-w-xl': !sourceWidth }"
-      :style="sourceWidth ? { width: sourceWidth + 'px', maxWidth: sourceWidth + 'px' } : undefined"
+      :style="[
+        { maxHeight: 'calc(100dvh - 2rem)' },
+        sourceWidth ? { width: sourceWidth + 'px', maxWidth: sourceWidth + 'px' } : {},
+      ]"
     >
-      <DialogHeader>
+      <DialogHeader class="shrink-0">
         <DialogTitle>Edytuj zadanie</DialogTitle>
       </DialogHeader>
-      <div class="px-4 pb-4">
-        <TaskFormFields :form="form">
+      <div class="flex flex-col flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-1">
+        <TaskFormFields :form="form" fill-height>
           <template #submit="{ isSubmitDisabled }">
             <InputGroupButton
               type="submit"

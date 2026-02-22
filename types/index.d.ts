@@ -8,5 +8,5 @@ export interface Task {
   createdAt: string
   gitUrl?: string
   jiraUrl?: string
-  externalLinks?: string[]
+  externalUrl?: string
 }

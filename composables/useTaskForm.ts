@@ -12,7 +12,7 @@ export const taskFormSchema = z.object({
   taskStatus: z.nativeEnum(TaskStatus),
   gitUrl: optionalUrlSchema,
   jiraUrl: optionalUrlSchema,
-  externalLinks: z.array(z.union([z.literal(''), urlSchema])).optional(),
+  externalUrl: optionalUrlSchema,
 })
 
 export type TaskForm = z.infer<typeof taskFormSchema>
@@ -23,7 +23,7 @@ const INITIAL_VALUES: TaskForm = {
   taskStatus: TaskStatus.COMPLETED,
   gitUrl: '',
   jiraUrl: '',
-  externalLinks: [],
+  externalUrl: '',
 }
 
 export const TASK_STATUS_OPTIONS = [
@@ -53,13 +53,12 @@ export const ADD_ELEMENT_OPTIONS: ReadonlyArray<{
 ]
 
 function normalizeSubmitPayload(values: TaskForm): TaskForm {
-  const external = (values.externalLinks ?? []).filter((u): u is string => Boolean(u?.trim()))
   return {
     ...values,
     description: values.description?.trim() || undefined,
     gitUrl: values.gitUrl?.trim() || undefined,
     jiraUrl: values.jiraUrl?.trim() || undefined,
-    externalLinks: external.length ? external : undefined,
+    externalUrl: values.externalUrl?.trim() || undefined,
   }
 }
 
@@ -79,11 +78,12 @@ export function useTaskForm(
   const [taskStatus] = defineField('taskStatus')
   const [gitUrl, gitUrlAttrs] = defineField('gitUrl')
   const [jiraUrl, jiraUrlAttrs] = defineField('jiraUrl')
-  const [externalLinks] = defineField('externalLinks')
+  const [externalUrl, externalUrlAttrs] = defineField('externalUrl')
 
   const hasDescriptionElement = ref(Boolean(startValues.description))
   const hasGitElement = ref(Boolean(startValues.gitUrl))
   const hasJiraElement = ref(Boolean(startValues.jiraUrl))
+  const hasExternalElement = ref(Boolean(startValues.externalUrl))
 
   const selectedTaskStatus = computed(() =>
     TASK_STATUS_OPTIONS.find(opt => opt.value === taskStatus.value)
@@ -94,6 +94,7 @@ export function useTaskForm(
       if (opt.type === AddElementType.DESCRIPTION) return !hasDescriptionElement.value
       if (opt.type === AddElementType.GIT) return !hasGitElement.value
       if (opt.type === AddElementType.JIRA) return !hasJiraElement.value
+      if (opt.type === AddElementType.EXTERNAL) return !hasExternalElement.value
       return true
     })
   )
@@ -103,7 +104,7 @@ export function useTaskForm(
       hasDescriptionElement.value ||
       hasGitElement.value ||
       hasJiraElement.value ||
-      (externalLinks.value?.length ?? 0) > 0
+      hasExternalElement.value
   )
 
   const formErrors = computed(() => {
@@ -127,7 +128,8 @@ export function useTaskForm(
     jiraUrl.value = ''
     hasGitElement.value = false
     hasJiraElement.value = false
-    externalLinks.value = []
+    externalUrl.value = ''
+    hasExternalElement.value = false
   }
 
   const onSubmit = handleSubmit(values => {
@@ -139,20 +141,7 @@ export function useTaskForm(
     if (type === AddElementType.DESCRIPTION) hasDescriptionElement.value = true
     else if (type === AddElementType.GIT) hasGitElement.value = true
     else if (type === AddElementType.JIRA) hasJiraElement.value = true
-    else if (type === AddElementType.EXTERNAL)
-      externalLinks.value = [...(externalLinks.value ?? []), '']
-  }
-
-  function removeExternalLink(index: number) {
-    const arr = [...(externalLinks.value ?? [])]
-    arr.splice(index, 1)
-    externalLinks.value = arr
-  }
-
-  function setExternalLink(index: number, value: string) {
-    const arr = [...(externalLinks.value ?? [])]
-    arr[index] = value
-    externalLinks.value = arr
+    else if (type === AddElementType.EXTERNAL) hasExternalElement.value = true
   }
 
   function removeGitElement() {
@@ -163,6 +152,11 @@ export function useTaskForm(
   function removeJiraElement() {
     hasJiraElement.value = false
     jiraUrl.value = ''
+  }
+
+  function removeExternalElement() {
+    hasExternalElement.value = false
+    externalUrl.value = ''
   }
 
   return {
@@ -182,12 +176,14 @@ export function useTaskForm(
     gitUrlAttrs,
     jiraUrl,
     jiraUrlAttrs,
-    externalLinks,
+    externalUrl,
+    externalUrlAttrs,
 
     // UI state
     hasDescriptionElement,
     hasGitElement,
     hasJiraElement,
+    hasExternalElement,
     hasExtendedContent,
 
     // Options
@@ -197,9 +193,8 @@ export function useTaskForm(
 
     // Actions
     onAddElement,
-    removeExternalLink,
-    setExternalLink,
     removeGitElement,
     removeJiraElement,
+    removeExternalElement,
   }
 }

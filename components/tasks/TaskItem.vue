@@ -2,11 +2,13 @@
 import { Item, ItemContent, ItemTitle } from '@/components/ui/item'
 import { TaskStatus } from '@/types/enums'
 import { Icon } from '@iconify/vue'
+import type { HTMLAttributes } from 'vue'
 import type { Task } from '@/types'
 
 const props = withDefaults(
   defineProps<{
     task: Task
+    class?: HTMLAttributes['class']
     clickable?: boolean
     /** When true, description is always fully visible (no "show more/less") */
     descriptionAlwaysExpanded?: boolean
@@ -17,6 +19,7 @@ const props = withDefaults(
     clickable: true,
     descriptionAlwaysExpanded: false,
     showCloseButton: false,
+    class: '',
   }
 )
 
@@ -47,7 +50,7 @@ watch(
 )
 
 const hasLinks = computed(
-  () => !!(props.task.gitUrl || props.task.jiraUrl || (props.task.externalLinks?.length ?? 0) > 0)
+  () => !!(props.task.gitUrl || props.task.jiraUrl || props.task.externalUrl)
 )
 </script>
 
@@ -55,7 +58,11 @@ const hasLinks = computed(
   <Item
     variant="outline"
     class="relative bg-card transition-colors select-none"
-    :class="[props.clickable && 'cursor-pointer hover:border-accent active:bg-accent/60']"
+    :class="[
+      ,
+      props.clickable && 'cursor-pointer hover:border-accent active:bg-accent/60',
+      props.class,
+    ]"
     @click="props.clickable && emit('preview', task.id)"
   >
     <ItemContent>
@@ -106,8 +113,13 @@ const hasLinks = computed(
 
       <div v-if="task.description" class="relative mt-1">
         <div
-          class="overflow-hidden"
-          :class="props.descriptionAlwaysExpanded || isExpanded ? '' : 'max-h-[4.5em]'"
+          :class="
+            props.descriptionAlwaysExpanded
+              ? 'overflow-y-auto max-h-[calc(100dvh-8rem)]'
+              : isExpanded
+                ? 'overflow-hidden'
+                : 'overflow-hidden max-h-[4.5em]'
+          "
         >
           <p
             ref="descriptionRef"
@@ -148,18 +160,17 @@ const hasLinks = computed(
           <Icon icon="simple-icons:jira" class="size-3.5" />
           Jira
         </a>
-        <template v-for="(url, i) in task.externalLinks ?? []" :key="i">
-          <a
-            :href="url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition"
-            @click.stop
-          >
-            <Icon icon="lucide:external-link" class="size-3.5" />
-            Link
-          </a>
-        </template>
+        <a
+          v-if="task.externalUrl"
+          :href="task.externalUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition"
+          @click.stop
+        >
+          <Icon icon="lucide:external-link" class="size-3.5" />
+          Link
+        </a>
 
         <button
           v-if="!props.descriptionAlwaysExpanded && isOverflowing"

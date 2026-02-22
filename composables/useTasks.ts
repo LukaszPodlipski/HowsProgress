@@ -15,13 +15,13 @@ export const useTasks = () => {
       const parsed = JSON.parse(stored) as (Task & { text?: string })[]
       tasks.value = parsed.map(t => ({
         id: t.id,
-        title: t.title ?? t.text ?? '',
+        title: t.title,
         description: t.description,
         status: t.status,
         createdAt: t.createdAt,
         gitUrl: t.gitUrl,
         jiraUrl: t.jiraUrl,
-        externalLinks: t.externalLinks,
+        externalUrl: t.externalUrl,
       }))
     } catch (error) {
       console.error('Error reading tasks:', error)
@@ -48,7 +48,7 @@ export const useTasks = () => {
       createdAt: new Date().toISOString(),
       gitUrl: taskForm.gitUrl,
       jiraUrl: taskForm.jiraUrl,
-      externalLinks: taskForm.externalLinks?.length ? taskForm.externalLinks : undefined,
+      externalUrl: taskForm.externalUrl?.trim() || undefined,
     }
 
     tasks.value.push(task)
@@ -68,7 +68,6 @@ export const useTasks = () => {
     if (index === -1) return console.error('Task not found')
 
     const existing = tasks.value[index]!
-    const cleanExternal = (form.externalLinks ?? []).filter((u): u is string => Boolean(u?.trim()))
     tasks.value[index] = {
       ...existing,
       title: form.title.trim(),
@@ -76,7 +75,7 @@ export const useTasks = () => {
       status: form.taskStatus,
       gitUrl: form.gitUrl?.trim() || undefined,
       jiraUrl: form.jiraUrl?.trim() || undefined,
-      externalLinks: cleanExternal.length ? cleanExternal : undefined,
+      externalUrl: form.externalUrl?.trim() || undefined,
     }
     saveTasksLocalStorage(tasks.value)
   }
