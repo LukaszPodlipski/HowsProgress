@@ -81,7 +81,11 @@ const hasLinks = computed(
         </ItemTitle>
         <div
           class="flex items-center gap-0.5 transition-opacity"
-          :class="props.showCloseButton ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100'"
+          :class="
+            props.showCloseButton
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/item:opacity-100 pointer-events-none'
+          "
         >
           <button
             type="button"
