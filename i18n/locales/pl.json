@@ -36,6 +36,10 @@
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",
-    "account": "Konto"
+    "account": "Konto",
+    "continueLocally": "Kontynuuj bez konta",
+    "localModeDisclaimer": "Bez konta dane są zapisywane tylko lokalnie na tym urządzeniu.",
+    "signIn": "Zaloguj się",
+    "tagline": "Śledź swoje codzienne zadania w pracy."
   }
 }

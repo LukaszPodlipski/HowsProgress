@@ -6,8 +6,13 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth'
 
+const LOCAL_MODE_KEY = 'how-is-your-progress-local-mode'
+
 const currentUser = ref<User | null>(null)
 const authReady = ref(false)
+const isLocalMode = ref<boolean>(
+  typeof window !== 'undefined' && localStorage.getItem(LOCAL_MODE_KEY) === 'true'
+)
 
 export const useAuth = () => {
   const { $firebaseAuth } = useNuxtApp()
@@ -32,6 +37,13 @@ export const useAuth = () => {
 
   const signOut = async () => {
     await firebaseSignOut($firebaseAuth as Auth)
+    isLocalMode.value = false
+    localStorage.removeItem(LOCAL_MODE_KEY)
+  }
+
+  const continueLocally = () => {
+    isLocalMode.value = true
+    localStorage.setItem(LOCAL_MODE_KEY, 'true')
   }
 
   const isLoggedIn = computed(() => currentUser.value !== null)
@@ -50,9 +62,11 @@ export const useAuth = () => {
   return {
     currentUser: readonly(currentUser),
     isLoggedIn,
+    isLocalMode: readonly(isLocalMode),
     userInitials,
     initAuth,
     signInWithGoogle,
     signOut,
+    continueLocally,
   }
 }

@@ -11,16 +11,21 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-const { currentUser, isLoggedIn, userInitials, initAuth, signInWithGoogle, signOut } = useAuth()
-const { fetchTasks, migrateLocalStorageToFirestore, teardownFirestore } = useTasks()
+const { currentUser, isLoggedIn, isLocalMode, userInitials, initAuth, signOut } = useAuth()
+const { fetchTasks, teardownFirestore } = useTasks()
+const route = useRoute()
+const { t } = useI18n()
 
 await initAuth()
+
+if (!isLoggedIn.value && !isLocalMode.value) {
+  await navigateTo('/login')
+}
 
 watch(
   () => currentUser.value?.uid,
   async (uid, prevUid) => {
     if (uid && !prevUid) {
-      await migrateLocalStorageToFirestore(uid)
       fetchTasks()
     } else if (!uid && prevUid) {
       teardownFirestore()
@@ -28,11 +33,17 @@ watch(
     }
   }
 )
+
+watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
+  if (!loggedIn && !localMode) {
+    navigateTo('/login')
+  }
+})
 </script>
 
 <template>
   <div class="min-h-screen flex flex-col items-center">
-    <nav class="fixed top-0 left-0 right-0 z-100 py-1 px-2">
+    <nav v-if="route.path !== '/login'" class="fixed top-0 left-0 right-0 z-100 py-1 px-2">
       <div class="flex items-center gap-4 justify-between max-w-4xl mx-auto">
         <NuxtImg src="/logo.png" alt="How's progress?" width="50" height="50" />
 
@@ -56,16 +67,15 @@ watch(
               <DropdownMenuSeparator />
               <DropdownMenuItem @click="signOut">
                 <Icon name="lucide:log-out" class="size-4" />
-                {{ $t('auth.signOut') }}
+                {{ t('auth.signOut') }}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </template>
 
-        <template v-else>
-          <Button variant="outline" size="sm" @click="signInWithGoogle">
-            <Icon name="logos:google-icon" class="size-4" />
-            {{ $t('auth.signInWithGoogle') }}
+        <template v-else-if="isLocalMode">
+          <Button variant="outline" size="sm" @click="navigateTo('/login')">
+            {{ t('auth.signIn') }}
           </Button>
         </template>
       </div>

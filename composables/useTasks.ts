@@ -10,7 +10,6 @@ import {
   query,
   orderBy,
   writeBatch,
-  getDocs,
 } from 'firebase/firestore'
 
 const STORAGE_KEY = 'how-is-your-progress-tasks'
@@ -53,6 +52,7 @@ const teardownFirestore = () => {
 const loadFromLocalStorage = () => {
   if (typeof window === 'undefined') return
 
+  tasks.value = []
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) return
@@ -88,32 +88,6 @@ const saveToLocalStorage = (list: Task[]) => {
 export const useTasks = () => {
   const { currentUser, isLoggedIn } = useAuth()
   const { $firebaseDb } = useNuxtApp()
-
-  /* --- migration --- */
-
-  const migrateLocalStorageToFirestore = async (uid: string) => {
-    const col = getTasksCol($firebaseDb as Firestore, uid)
-
-    // Skip migration if user already has data in Firestore
-    const existing = await getDocs(col)
-    if (!existing.empty) return
-
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return
-
-    try {
-      const localTasks = JSON.parse(stored) as Task[]
-      if (localTasks.length === 0) return
-
-      const batch = writeBatch($firebaseDb as Firestore)
-      localTasks.forEach((task, index) => {
-        batch.set(doc(col, task.id), toFirestoreDoc({ ...task, order: task.order ?? index }))
-      })
-      await batch.commit()
-    } catch (error) {
-      console.error('Migration from localStorage failed:', error)
-    }
-  }
 
   /* --- fetch --- */
 
@@ -258,7 +232,6 @@ export const useTasks = () => {
     removeTask,
     restoreTask,
     reorderTask,
-    migrateLocalStorageToFirestore,
     teardownFirestore,
   }
 }
