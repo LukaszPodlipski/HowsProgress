@@ -32,5 +32,10 @@
     "invalidUrl": "Wprowadź prawidłowy adres URL",
     "titleMaxLength": "Tytuł nie może przekraczać 100 znaków",
     "descriptionMaxLength": "Opis nie może przekraczać 1000 znaków"
+  },
+  "auth": {
+    "signInWithGoogle": "Zaloguj się przez Google",
+    "signOut": "Wyloguj się",
+    "account": "Konto"
   }
 }

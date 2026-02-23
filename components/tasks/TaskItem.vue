@@ -72,7 +72,7 @@ const hasLinks = computed(
     @click="props.clickable && emit('preview', task.id)"
   >
     <ItemContent>
-      <div class="flex items-start justify-between">
+      <div class="flex items-start justify-between gap-4">
         <ItemTitle class="min-w-0">
           <Icon
             :icon="

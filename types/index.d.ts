@@ -9,4 +9,5 @@ export interface Task {
   gitUrl?: string
   jiraUrl?: string
   externalUrl?: string
+  order: number
 }

@@ -2,6 +2,17 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
+
+  runtimeConfig: {
+    public: {
+      firebaseApiKey: '',
+      firebaseAuthDomain: '',
+      firebaseProjectId: '',
+      firebaseStorageBucket: '',
+      firebaseMessagingSenderId: '',
+      firebaseAppId: '',
+    },
+  },
   modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image', '@nuxt/icon', '@nuxtjs/i18n'],
   compatibilityDate: '2024-04-03',
   ssr: false,
