@@ -10,9 +10,11 @@ import {
   query,
   orderBy,
   writeBatch,
+  getDocs,
 } from 'firebase/firestore'
 
 const STORAGE_KEY = 'how-is-your-progress-tasks'
+const SKIP_SYNC_KEY = 'how-is-your-progress-skip-sync'
 
 const tasks = ref<Task[]>([])
 let firestoreUnsubscribe: (() => void) | null = null
@@ -224,6 +226,42 @@ export const useTasks = () => {
     }
   }
 
+  /* --- sync check (local -> Firestore) --- */
+
+  const checkSyncNeeded = async (uid: string): Promise<{ needed: boolean; localTasks: Task[] }> => {
+    if (localStorage.getItem(SKIP_SYNC_KEY) === 'true') return { needed: false, localTasks: [] }
+
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (!stored) return { needed: false, localTasks: [] }
+
+    let localTasks: Task[]
+    try {
+      localTasks = JSON.parse(stored) as Task[]
+    } catch {
+      return { needed: false, localTasks: [] }
+    }
+    if (localTasks.length === 0) return { needed: false, localTasks: [] }
+
+    const col = getTasksCol($firebaseDb as Firestore, uid)
+    const existing = await getDocs(col)
+    if (!existing.empty) return { needed: false, localTasks: [] }
+
+    return { needed: true, localTasks }
+  }
+
+  const syncLocalTasksToFirestore = async (uid: string, localTasks: Task[]): Promise<void> => {
+    const col = getTasksCol($firebaseDb as Firestore, uid)
+    const batch = writeBatch($firebaseDb as Firestore)
+    localTasks.forEach((task, index) => {
+      batch.set(doc(col, task.id), toFirestoreDoc({ ...task, order: task.order ?? index }))
+    })
+    await batch.commit()
+  }
+
+  const dismissSync = () => {
+    localStorage.setItem(SKIP_SYNC_KEY, 'true')
+  }
+
   return {
     tasks,
     fetchTasks,
@@ -233,5 +271,8 @@ export const useTasks = () => {
     restoreTask,
     reorderTask,
     teardownFirestore,
+    checkSyncNeeded,
+    syncLocalTasksToFirestore,
+    dismissSync,
   }
 }

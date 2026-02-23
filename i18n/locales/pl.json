@@ -33,6 +33,12 @@
     "titleMaxLength": "Tytuł nie może przekraczać 100 znaków",
     "descriptionMaxLength": "Opis nie może przekraczać 1000 znaków"
   },
+  "sync": {
+    "title": "Zsynchronizuj lokalne zadania",
+    "description": "Masz {count} zadań zapisanych lokalnie. Czy chcesz przenieść je na swoje konto Google?",
+    "confirm": "Przenieś na konto",
+    "dismiss": "Nie, dziękuję"
+  },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",

@@ -10,11 +10,17 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import type { Task } from '@/types'
 
 const { currentUser, isLoggedIn, isLocalMode, userInitials, initAuth, signOut } = useAuth()
-const { fetchTasks, teardownFirestore } = useTasks()
+const { fetchTasks, teardownFirestore, checkSyncNeeded, syncLocalTasksToFirestore, dismissSync } =
+  useTasks()
+
 const route = useRoute()
 const { t } = useI18n()
+
+const showSyncDialog = ref(false)
+const pendingSyncTasks = ref<Task[]>([])
 
 await initAuth()
 
@@ -26,6 +32,11 @@ watch(
   () => currentUser.value?.uid,
   async (uid, prevUid) => {
     if (uid && !prevUid) {
+      const sync = await checkSyncNeeded(uid)
+      if (sync.needed) {
+        showSyncDialog.value = true
+        pendingSyncTasks.value = sync.localTasks
+      }
       fetchTasks()
     } else if (!uid && prevUid) {
       teardownFirestore()
@@ -33,6 +44,20 @@ watch(
     }
   }
 )
+
+const handleSync = async () => {
+  if (currentUser.value) {
+    await syncLocalTasksToFirestore(currentUser.value.uid, pendingSyncTasks.value)
+  }
+  showSyncDialog.value = false
+  pendingSyncTasks.value = []
+}
+
+const handleDismissSync = () => {
+  dismissSync()
+  showSyncDialog.value = false
+  pendingSyncTasks.value = []
+}
 
 watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
   if (!loggedIn && !localMode) {
@@ -85,4 +110,10 @@ watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
     </main>
   </div>
   <Toaster position="top-center" theme="dark" />
+  <SyncDialog
+    :open="showSyncDialog"
+    :task-count="pendingSyncTasks.length"
+    @sync="handleSync"
+    @dismiss="handleDismissSync"
+  />
 </template>
