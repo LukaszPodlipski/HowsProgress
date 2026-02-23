@@ -77,9 +77,11 @@ watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
             <DropdownMenuTrigger as-child>
               <Avatar size="xs" class="cursor-pointer">
                 <AvatarImage
+                  v-if="currentUser?.photoURL"
                   class="min-w-8 min-h-8"
-                  :src="currentUser?.photoURL ?? ''"
+                  :src="currentUser.photoURL"
                   :alt="currentUser?.displayName ?? ''"
+                  referrer-policy="no-referrer"
                 />
                 <AvatarFallback>{{ userInitials }}</AvatarFallback>
               </Avatar>
