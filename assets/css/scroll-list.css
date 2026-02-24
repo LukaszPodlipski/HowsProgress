@@ -21,7 +21,7 @@
   height: 300px;
   overflow: auto;
   border-radius: 8px;
-  padding-top: 64px;
+  padding-top: 16px;
 }
 
 .scroll-list__wrp-frame {
@@ -45,19 +45,6 @@
 
 .scroll-list__fade--top {
   top: 0;
-
-  @media screen and (max-width: 820px) {
-    height: 64px;
-
-    /* For smaller screens top element on top navbar enter scroll list area */
-    /* Enlarge top fade gradient to cover top navbar */
-    background: linear-gradient(
-      to bottom,
-      var(--background) 0%,
-      color-mix(in oklch, var(--background) 80%, transparent) 30%,
-      transparent 100%
-    );
-  }
 }
 
 .scroll-list__fade--bottom {

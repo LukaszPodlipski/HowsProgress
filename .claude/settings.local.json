@@ -10,7 +10,12 @@
       "Bash(grep:*)",
       "Bash(grep error:*)",
       "Bash(grep ✖:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "WebFetch(domain:shadcn-vue.com)",
+      "WebFetch(domain:radix.shadcn-vue.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(head:*)"
     ]
   }
 }

@@ -22,7 +22,7 @@ const handleSignInWithGoogle = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-muted flex items-center justify-center p-4">
+  <div class="min-h-screen bg-background flex items-center justify-center p-4">
     <div
       class="w-full max-w-sm bg-card border border-border rounded-xl shadow-sm p-8 flex flex-col gap-6"
     >

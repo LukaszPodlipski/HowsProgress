@@ -303,7 +303,7 @@ const getInputElement = (): Element | null => {
 }
 
 const scrollListHeigth = computed(() => {
-  const PADDING_HEIGHT = 44
+  const PADDING_HEIGHT = 100
 
   if (inputBlockHeight.value === 0) {
     const el = getInputElement()

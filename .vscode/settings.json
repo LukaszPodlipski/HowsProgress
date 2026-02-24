@@ -69,7 +69,11 @@
   "editor.insertSpaces": true,
   "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "i18n-ally.localesPaths": [
+    "i18n",
+    "i18n/locales"
+  ]
 }
 
 
