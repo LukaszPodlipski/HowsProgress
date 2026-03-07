@@ -70,8 +70,9 @@ const hasLinks = computed(
 <template>
   <Item
     variant="outline"
-    class="relative bg-card select-none transition-all duration-200 ease-out"
+    class="relative bg-card transition-all duration-200 ease-out"
     :class="[
+      props.embedded ? 'select-text' : 'select-none',
       props.clickable && 'cursor-pointer hover:border-accent active:bg-accent/60',
       props.dragging &&
         'opacity-60 scale-[0.95] ring-2 ring-primary/70 ring-offset-2 ring-offset-background shadow-lg',
