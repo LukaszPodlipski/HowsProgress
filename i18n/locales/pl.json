@@ -46,7 +46,14 @@
     "namePlaceholder": "Nazwa projektu...",
     "create": "Utwórz",
     "cancel": "Anuluj",
-    "defaultName": "Projekt domyślny"
+    "defaultName": "Projekt domyślny",
+    "edit": "Edytuj projekt",
+    "editTitle": "Edytuj projekt",
+    "save": "Zapisz",
+    "delete": "Usuń projekt",
+    "deleteTitle": "Usuń projekt",
+    "deleteDescription": "Czy na pewno chcesz usunąć projekt \"{name}\"? Wszystkie zadania w tym projekcie zostaną trwale usunięte.",
+    "deleteConfirm": "Usuń projekt"
   },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",

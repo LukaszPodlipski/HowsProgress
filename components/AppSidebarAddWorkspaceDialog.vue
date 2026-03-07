@@ -3,28 +3,37 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { WORKSPACE_EMOJI_OPTIONS } from '@/types/enums'
+import type { Workspace } from '@/types'
 
+const props = defineProps<{ workspace?: Workspace | null }>()
 const open = defineModel<boolean>('open', { required: true })
 
 const { t } = useI18n()
-const { addWorkspace, setActiveWorkspace } = useWorkspaces()
+const { addWorkspace, updateWorkspace, setActiveWorkspace } = useWorkspaces()
 
-const newName = ref('')
-const newEmoji = ref(WORKSPACE_EMOJI_OPTIONS[0])
+const isEdit = computed(() => !!props.workspace)
+
+const name = ref('')
+const emoji = ref(WORKSPACE_EMOJI_OPTIONS[0])
 
 watch(open, val => {
   if (val) {
-    newName.value = ''
-    newEmoji.value = WORKSPACE_EMOJI_OPTIONS[0]
+    name.value = props.workspace?.name ?? ''
+    emoji.value = props.workspace?.emoji ?? WORKSPACE_EMOJI_OPTIONS[0]
   }
 })
 
-const handleCreate = async () => {
-  const name = newName.value.trim()
-  if (!name) return
+const handleSubmit = async () => {
+  const trimmed = name.value.trim()
+  if (!trimmed) return
 
-  const ws = await addWorkspace(name, newEmoji.value!)
-  setActiveWorkspace(ws.id)
+  if (isEdit.value && props.workspace) {
+    await updateWorkspace(props.workspace.id, trimmed, emoji.value!)
+  } else {
+    const ws = await addWorkspace(trimmed, emoji.value!)
+    setActiveWorkspace(ws.id)
+  }
+
   open.value = false
 }
 </script>
@@ -33,26 +42,26 @@ const handleCreate = async () => {
   <Dialog v-model:open="open">
     <DialogContent class="sm:max-w-sm">
       <DialogHeader>
-        <DialogTitle>{{ t('workspace.addTitle') }}</DialogTitle>
+        <DialogTitle>{{ isEdit ? t('workspace.editTitle') : t('workspace.addTitle') }}</DialogTitle>
       </DialogHeader>
 
       <div class="flex flex-col gap-4 px-4 mt-1">
         <Input
-          v-model="newName"
+          v-model="name"
           :placeholder="t('workspace.namePlaceholder')"
-          @keyup.enter="handleCreate"
+          @keyup.enter="handleSubmit"
         />
 
         <div class="grid grid-cols-6 gap-4 justify-items-center">
           <button
-            v-for="emoji in WORKSPACE_EMOJI_OPTIONS"
-            :key="emoji"
+            v-for="e in WORKSPACE_EMOJI_OPTIONS"
+            :key="e"
             type="button"
             class="flex items-center justify-center h-9 w-9 rounded-md text-xl transition-colors hover:bg-accent"
-            :class="newEmoji === emoji ? 'bg-accent ring-2 ring-ring' : ''"
-            @click="newEmoji = emoji"
+            :class="emoji === e ? 'bg-accent ring-2 ring-ring' : ''"
+            @click="emoji = e"
           >
-            {{ emoji }}
+            {{ e }}
           </button>
         </div>
 
@@ -60,8 +69,8 @@ const handleCreate = async () => {
           <Button variant="outline" @click="open = false">
             {{ t('workspace.cancel') }}
           </Button>
-          <Button :disabled="!newName.trim()" @click="handleCreate">
-            {{ t('workspace.create') }}
+          <Button :disabled="!name.trim()" @click="handleSubmit">
+            {{ isEdit ? t('workspace.save') : t('workspace.create') }}
           </Button>
         </div>
       </div>

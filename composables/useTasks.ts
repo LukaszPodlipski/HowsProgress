@@ -92,13 +92,17 @@ const saveToLocalStorage = (wsId: string, list: Task[]) => {
 export const useTasks = () => {
   const { currentUser, isLoggedIn } = useAuth()
   const { $firebaseDb } = useNuxtApp()
-  const { activeWorkspaceId } = useWorkspaces()
+  const { activeWorkspaceId, ensureDefaultWorkspace } = useWorkspaces()
 
   /* --- fetch --- */
 
   const fetchTasks = async () => {
     const wsId = activeWorkspaceId.value
-    if (!wsId) return
+    if (!wsId) {
+      teardownFirestore()
+      tasks.value = []
+      return
+    }
 
     if (isLoggedIn.value && currentUser.value) {
       setupFirestoreListener($firebaseDb as Firestore, currentUser.value.uid, wsId)
@@ -111,6 +115,9 @@ export const useTasks = () => {
   /* --- add --- */
 
   const addTask = async (taskForm: TaskForm): Promise<Task> => {
+    if (!activeWorkspaceId.value) {
+      await ensureDefaultWorkspace()
+    }
     const wsId = activeWorkspaceId.value!
     const newOrder = tasks.value.length
 
