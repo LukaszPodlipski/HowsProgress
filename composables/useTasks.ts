@@ -6,14 +6,13 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  getDocs,
   onSnapshot,
   query,
   orderBy,
   writeBatch,
-  getDocs,
 } from 'firebase/firestore'
 
-const STORAGE_KEY = 'how-is-your-progress-tasks'
 const SKIP_SYNC_KEY = 'how-is-your-progress-skip-sync'
 
 const tasks = ref<Task[]>([])
@@ -21,7 +20,10 @@ let firestoreUnsubscribe: (() => void) | null = null
 
 /* --------------------------- HELPERS ----------------------------------- */
 
-const getTasksCol = (db: Firestore, uid: string) => collection(db, 'users', uid, 'tasks')
+const getLocalStorageKey = (wsId: string) => `how-is-your-progress-tasks--${wsId}`
+
+const getTasksCol = (db: Firestore, uid: string, wsId: string) =>
+  collection(db, 'users', uid, 'workspaces', wsId, 'tasks')
 
 // Firestore v9+ rejects undefined values — strip them before every write
 const toFirestoreDoc = (obj: Record<string, unknown>): Record<string, unknown> =>
@@ -29,13 +31,13 @@ const toFirestoreDoc = (obj: Record<string, unknown>): Record<string, unknown> =
 
 /* --------------------------- FIRESTORE LISTENER ----------------------------------- */
 
-const setupFirestoreListener = (db: Firestore, uid: string) => {
+const setupFirestoreListener = (db: Firestore, uid: string, wsId: string) => {
   if (firestoreUnsubscribe) {
     firestoreUnsubscribe()
     firestoreUnsubscribe = null
   }
 
-  const q = query(getTasksCol(db, uid), orderBy('order', 'asc'))
+  const q = query(getTasksCol(db, uid, wsId), orderBy('order', 'asc'))
 
   firestoreUnsubscribe = onSnapshot(q, snapshot => {
     tasks.value = snapshot.docs.map(d => ({ ...(d.data() as Task), id: d.id }))
@@ -51,15 +53,15 @@ const teardownFirestore = () => {
 
 /* --------------------------- LOCALSTORAGE ----------------------------------- */
 
-const loadFromLocalStorage = () => {
+const loadFromLocalStorage = (wsId: string) => {
   if (typeof window === 'undefined') return
 
   tasks.value = []
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(getLocalStorageKey(wsId))
     if (!stored) return
-    const parsed = JSON.parse(stored) as (Task & { text?: string })[]
-    tasks.value = parsed.map((t, index) => ({
+    const parsed = JSON.parse(stored) as Task[]
+    tasks.value = parsed.map(t => ({
       id: t.id,
       title: t.title,
       description: t.description,
@@ -68,18 +70,18 @@ const loadFromLocalStorage = () => {
       gitUrl: t.gitUrl,
       jiraUrl: t.jiraUrl,
       externalUrl: t.externalUrl,
-      order: t.order ?? index, // backward compat: tasks without order field
+      order: t.order,
     }))
   } catch (error) {
     console.error('Error reading tasks:', error)
   }
 }
 
-const saveToLocalStorage = (list: Task[]) => {
+const saveToLocalStorage = (wsId: string, list: Task[]) => {
   if (typeof window === 'undefined') return
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    localStorage.setItem(getLocalStorageKey(wsId), JSON.stringify(list))
   } catch (error) {
     console.error('Error saving tasks:', error)
   }
@@ -90,21 +92,26 @@ const saveToLocalStorage = (list: Task[]) => {
 export const useTasks = () => {
   const { currentUser, isLoggedIn } = useAuth()
   const { $firebaseDb } = useNuxtApp()
+  const { activeWorkspaceId } = useWorkspaces()
 
   /* --- fetch --- */
 
   const fetchTasks = async () => {
+    const wsId = activeWorkspaceId.value
+    if (!wsId) return
+
     if (isLoggedIn.value && currentUser.value) {
-      setupFirestoreListener($firebaseDb as Firestore, currentUser.value.uid)
+      setupFirestoreListener($firebaseDb as Firestore, currentUser.value.uid, wsId)
     } else {
       teardownFirestore()
-      loadFromLocalStorage()
+      loadFromLocalStorage(wsId)
     }
   }
 
   /* --- add --- */
 
   const addTask = async (taskForm: TaskForm): Promise<Task> => {
+    const wsId = activeWorkspaceId.value!
     const newOrder = tasks.value.length
 
     const task: Task = {
@@ -120,12 +127,12 @@ export const useTasks = () => {
     }
 
     if (isLoggedIn.value && currentUser.value) {
-      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid)
+      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
       await setDoc(doc(col, task.id), toFirestoreDoc(task as unknown as Record<string, unknown>))
       // onSnapshot will update tasks.value reactively
     } else {
       tasks.value.push(task)
-      saveToLocalStorage(tasks.value)
+      saveToLocalStorage(wsId, tasks.value)
     }
 
     return task
@@ -134,19 +141,22 @@ export const useTasks = () => {
   /* --- remove --- */
 
   const removeTask = async (id: string): Promise<void> => {
+    const wsId = activeWorkspaceId.value!
+
     if (isLoggedIn.value && currentUser.value) {
-      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid)
+      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
       await deleteDoc(doc(col, id))
     } else {
       const filtered = tasks.value.filter(t => t.id !== id)
       tasks.value = filtered
-      saveToLocalStorage(filtered)
+      saveToLocalStorage(wsId, filtered)
     }
   }
 
   /* --- update --- */
 
   const updateTask = async (id: string, form: TaskForm): Promise<void> => {
+    const wsId = activeWorkspaceId.value!
     const index = tasks.value.findIndex(t => t.id === id)
     if (index === -1) return console.error('Task not found:', id)
 
@@ -162,11 +172,11 @@ export const useTasks = () => {
     }
 
     if (isLoggedIn.value && currentUser.value) {
-      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid)
+      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
       await setDoc(doc(col, id), toFirestoreDoc(updated as unknown as Record<string, unknown>))
     } else {
       tasks.value[index] = updated
-      saveToLocalStorage(tasks.value)
+      saveToLocalStorage(wsId, tasks.value)
     }
   }
 
@@ -174,6 +184,7 @@ export const useTasks = () => {
 
   const reorderTask = async (fromIndex: number, toIndex: number): Promise<void> => {
     if (fromIndex === toIndex) return
+    const wsId = activeWorkspaceId.value!
 
     const arr = [...tasks.value]
     const [item] = arr.splice(fromIndex, 1)
@@ -183,7 +194,7 @@ export const useTasks = () => {
     tasks.value = arr
 
     if (isLoggedIn.value && currentUser.value) {
-      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid)
+      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
       const start = Math.min(fromIndex, toIndex)
       const end = Math.max(fromIndex, toIndex)
 
@@ -195,15 +206,17 @@ export const useTasks = () => {
       }
       await batch.commit()
     } else {
-      saveToLocalStorage(arr)
+      saveToLocalStorage(wsId, arr)
     }
   }
 
   /* --- restore (undo delete) --- */
 
   const restoreTask = async (task: Task, index?: number): Promise<void> => {
+    const wsId = activeWorkspaceId.value!
+
     if (isLoggedIn.value && currentUser.value) {
-      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid)
+      const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
 
       if (typeof index === 'number' && index >= 0 && index <= tasks.value.length) {
         const batch = writeBatch($firebaseDb as Firestore)
@@ -222,27 +235,23 @@ export const useTasks = () => {
       } else {
         tasks.value.push(task)
       }
-      saveToLocalStorage(tasks.value)
+      saveToLocalStorage(wsId, tasks.value)
     }
   }
 
-  /* --- sync check (local -> Firestore) --- */
+  /* --- sync (local mode → Firestore on first login) --- */
 
-  const checkSyncNeeded = async (uid: string): Promise<{ needed: boolean; localTasks: Task[] }> => {
+  const checkSyncNeeded = async (
+    uid: string,
+    localTasks: Task[]
+  ): Promise<{ needed: boolean; localTasks: Task[] }> => {
     if (localStorage.getItem(SKIP_SYNC_KEY) === 'true') return { needed: false, localTasks: [] }
-
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return { needed: false, localTasks: [] }
-
-    let localTasks: Task[]
-    try {
-      localTasks = JSON.parse(stored) as Task[]
-    } catch {
-      return { needed: false, localTasks: [] }
-    }
     if (localTasks.length === 0) return { needed: false, localTasks: [] }
 
-    const col = getTasksCol($firebaseDb as Firestore, uid)
+    const wsId = activeWorkspaceId.value
+    if (!wsId) return { needed: false, localTasks: [] }
+
+    const col = getTasksCol($firebaseDb as Firestore, uid, wsId)
     const existing = await getDocs(col)
     if (!existing.empty) return { needed: false, localTasks: [] }
 
@@ -250,7 +259,10 @@ export const useTasks = () => {
   }
 
   const syncLocalTasksToFirestore = async (uid: string, localTasks: Task[]): Promise<void> => {
-    const col = getTasksCol($firebaseDb as Firestore, uid)
+    const wsId = activeWorkspaceId.value
+    if (!wsId) return
+
+    const col = getTasksCol($firebaseDb as Firestore, uid, wsId)
     const batch = writeBatch($firebaseDb as Firestore)
     localTasks.forEach((task, index) => {
       batch.set(doc(col, task.id), toFirestoreDoc({ ...task, order: task.order ?? index }))

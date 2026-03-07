@@ -9,3 +9,18 @@ export enum AddElementType {
   JIRA = 'jira',
   EXTERNAL = 'external',
 }
+
+export const WORKSPACE_EMOJI_OPTIONS = [
+  '📋',
+  '🚀',
+  '💡',
+  '🔧',
+  '🎯',
+  '📝',
+  '⚙️',
+  '🏗️',
+  '🔍',
+  '✅',
+  '📊',
+  '🛠️',
+]

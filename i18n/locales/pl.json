@@ -39,6 +39,15 @@
     "confirm": "Przenieś na konto",
     "dismiss": "Nie, dziękuję"
   },
+  "workspace": {
+    "sectionLabel": "Projekty",
+    "add": "Nowy projekt",
+    "addTitle": "Utwórz projekt",
+    "namePlaceholder": "Nazwa projektu...",
+    "create": "Utwórz",
+    "cancel": "Anuluj",
+    "defaultName": "Projekt domyślny"
+  },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",

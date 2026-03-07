@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { Toaster } from '@/components/ui/sonner'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import type { Firestore } from 'firebase/firestore'
 import type { Task } from '@/types'
 
 const { currentUser, isLoggedIn, isLocalMode, initAuth } = useAuth()
 const { fetchTasks, teardownFirestore, checkSyncNeeded, syncLocalTasksToFirestore, dismissSync } =
   useTasks()
+const { initWorkspaces, teardownWorkspaces, activeWorkspaceId } = useWorkspaces()
+
+const showSyncDialog = ref(false)
+const pendingSyncTasks = ref<Task[]>([])
 
 const route = useRoute()
 
 const ROUTES_WITHOUT_SIDEBAR = ['/login']
 const isFullscreenRoute = computed(() => ROUTES_WITHOUT_SIDEBAR.includes(route.path))
-
-const showSyncDialog = ref(false)
-const pendingSyncTasks = ref<Task[]>([])
 
 await initAuth()
 
@@ -21,11 +23,35 @@ if (!isLoggedIn.value && !isLocalMode.value) {
   await navigateTo('/login')
 }
 
+const { $firebaseDb } = useNuxtApp()
+
+if (isLoggedIn.value && currentUser.value) {
+  await initWorkspaces($firebaseDb as Firestore, currentUser.value.uid)
+  fetchTasks()
+} else if (isLocalMode.value) {
+  await initWorkspaces()
+  fetchTasks()
+}
+
+const readLocalWorkspaceTasks = (): Task[] => {
+  const wsId = activeWorkspaceId.value
+  if (!wsId) return []
+  try {
+    const stored = localStorage.getItem(`how-is-your-progress-tasks--${wsId}`)
+    return stored ? (JSON.parse(stored) as Task[]) : []
+  } catch {
+    return []
+  }
+}
+
 watch(
   () => currentUser.value?.uid,
   async (uid, prevUid) => {
     if (uid && !prevUid) {
-      const sync = await checkSyncNeeded(uid)
+      // Read local tasks before initWorkspaces changes activeWorkspaceId
+      const localTasks = readLocalWorkspaceTasks()
+      await initWorkspaces($firebaseDb as Firestore, uid)
+      const sync = await checkSyncNeeded(uid, localTasks)
       if (sync.needed) {
         showSyncDialog.value = true
         pendingSyncTasks.value = sync.localTasks
@@ -33,6 +59,8 @@ watch(
       fetchTasks()
     } else if (!uid && prevUid) {
       teardownFirestore()
+      teardownWorkspaces()
+      await initWorkspaces()
       fetchTasks()
     }
   }

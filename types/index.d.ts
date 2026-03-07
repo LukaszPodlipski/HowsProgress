@@ -11,3 +11,11 @@ export interface Task {
   externalUrl?: string
   order: number
 }
+
+export interface Workspace {
+  id: string
+  name: string
+  emoji: string
+  order: number
+  createdAt: string
+}

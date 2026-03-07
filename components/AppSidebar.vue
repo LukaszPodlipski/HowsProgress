@@ -29,21 +29,23 @@ const { open } = useSidebar()
 <template>
   <Sidebar variant="inset" collapsible="icon">
     <SidebarHeader>
-      <div class="flex items-center gap-2 px-1 py-1">
+      <div class="flex items-center gap-4 px-1 py-1 h-8 min-h-8">
         <NuxtImg
           src="/logo.png"
           alt="How's progress?"
-          width="32"
-          height="32"
-          class="shrink-0 min-w-8 min-h-8"
+          width="16"
+          height="16"
+          class="shrink-0 min-w-5 min-h-5"
         />
-        <span class="font-semibold mt-1 text-sm group-data-[collapsible=icon]:hidden truncate">
-          How's progress?
-        </span>
+        <span class="font-sans font-semibold group-data-[collapsible=icon]:hidden truncate"
+          >So How's Progress?</span
+        >
       </div>
     </SidebarHeader>
 
-    <SidebarContent />
+    <SidebarContent>
+      <AppSidebarWorkspaces />
+    </SidebarContent>
 
     <SidebarFooter>
       <SidebarMenu>
@@ -93,8 +95,7 @@ const { open } = useSidebar()
           <template v-else-if="isLocalMode">
             <Button
               variant="outline"
-              size="sm"
-              class="w-full justify-start gap-2"
+              class="w-full justify-center gap-2"
               @click="navigateTo('/login')"
             >
               <Icon name="lucide:log-in" class="size-4 shrink-0" />

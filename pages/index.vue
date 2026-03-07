@@ -2,10 +2,12 @@
 import TaskInput, { type TaskForm } from '@/components/tasks/TaskInput.vue'
 import TasksList from '@/components/tasks/TasksList.vue'
 import { useTasks } from '@/composables/useTasks'
+import { useWorkspaces } from '@/composables/useWorkspaces'
 
 const tasksList = ref<InstanceType<typeof TasksList> | null>(null)
 
 const { fetchTasks, addTask } = useTasks()
+const { activeWorkspaceId } = useWorkspaces()
 
 /* --------------------------- FETCH TASKS AND HANDLE STORAGE EVENT ----------------------------------- */
 onBeforeMount(() => {
@@ -22,6 +24,11 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('storage', fetchTasks)
+})
+
+watch(activeWorkspaceId, () => {
+  fetchTasks()
+  nextTick(() => tasksList.value?.scrollToBottom())
 })
 
 /* --------------------------- ADD NEW TASK ----------------------------------- */

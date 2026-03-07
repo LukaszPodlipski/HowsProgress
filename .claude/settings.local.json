@@ -15,7 +15,10 @@
       "WebFetch(domain:radix.shadcn-vue.com)",
       "WebFetch(domain:cdn.jsdelivr.net)",
       "WebFetch(domain:api.github.com)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(bun run:*)",
+      "Bash(claude skills:*)",
+      "Bash(claude plugin:*)"
     ]
   }
 }

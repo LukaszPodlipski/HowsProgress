@@ -1,0 +1,11 @@
+{
+  "enabledPlugins": {
+    "nuxt@nuxt-skills": true,
+    "frontend-design@claude-code-plugins": true,
+    "vue-development@vue-development-marketplace": true,
+    "reka-ui@nuxt-skills": true,
+    "vue@nuxt-skills": true,
+    "vueuse@nuxt-skills": true,
+    "fullstack-dev-skills@fullstack-dev-skills": true
+  }
+}

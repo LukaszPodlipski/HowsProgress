@@ -26,6 +26,14 @@ bun run fix          # lint:fix + format
 
 No test suite is configured.
 
+## Workflow
+
+After every file edit or creation, run `bun run format` to auto-format changed files.
+
+## Legacy data
+
+This project is in early development — do NOT write migration logic for old data structures. If old data (localStorage keys, Firestore collections) is incompatible with the current schema, inform the user that they need to clear their data and start fresh.
+
 ## Architecture
 
 **"How's Progress"** is a daily work task tracker. It's a Nuxt 4 SPA (SSR disabled) wrapped in a Tauri v2 desktop shell, using localStorage for persistence — no backend.
