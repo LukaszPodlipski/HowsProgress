@@ -57,16 +57,22 @@ export function useTaskForm(
 
   const TASK_STATUS_OPTIONS = [
     {
-      label: t('task.statusCompleted'),
-      icon: 'lets-icons:done-duotone',
-      iconColor: 'text-green-500',
-      value: TaskStatus.COMPLETED,
+      label: t('task.statusToDo'),
+      icon: 'lets-icons:paper-duotone',
+      iconColor: 'text-blue-500',
+      value: TaskStatus.TO_DO,
     },
     {
       label: t('task.statusInProgress'),
       icon: 'lets-icons:clock-duotone',
       iconColor: 'text-yellow-500',
       value: TaskStatus.IN_PROGRESS,
+    },
+    {
+      label: t('task.statusCompleted'),
+      icon: 'lets-icons:done-duotone',
+      iconColor: 'text-green-500',
+      value: TaskStatus.COMPLETED,
     },
   ] as const
 

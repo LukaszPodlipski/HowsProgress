@@ -33,6 +33,14 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
+const STATUS_ICON_MAP: Record<TaskStatus, { icon: string; color: string }> = {
+  [TaskStatus.TO_DO]: { icon: 'lets-icons:paper-duotone', color: 'text-blue-500' },
+  [TaskStatus.IN_PROGRESS]: { icon: 'lets-icons:clock-duotone', color: 'text-yellow-500' },
+  [TaskStatus.COMPLETED]: { icon: 'lets-icons:done-duotone', color: 'text-green-500' },
+}
+
+const statusIcon = computed(() => STATUS_ICON_MAP[props.task.status])
+
 const isExpanded = ref(false)
 const descriptionRef = ref<HTMLElement | null>(null)
 const isOverflowing = ref(false)
@@ -74,15 +82,7 @@ const hasLinks = computed(
     <ItemContent>
       <div class="flex items-start justify-between gap-4">
         <ItemTitle class="min-w-0">
-          <Icon
-            :icon="
-              task.status === TaskStatus.COMPLETED
-                ? 'lets-icons:done-duotone'
-                : 'lets-icons:clock-duotone'
-            "
-            class="size-4 shrink-0"
-            :class="[task.status === TaskStatus.COMPLETED ? 'text-green-500' : 'text-yellow-500']"
-          />
+          <Icon :icon="statusIcon.icon" class="size-4 shrink-0" :class="[statusIcon.color]" />
           <span class="min-w-0 wrap-break-word text-balance">{{ task.title }}</span>
         </ItemTitle>
         <div
