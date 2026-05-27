@@ -56,6 +56,11 @@
     "deleteDescription": "Czy na pewno chcesz usunąć projekt \"{name}\"? Wszystkie zadania w tym projekcie zostaną trwale usunięte.",
     "deleteConfirm": "Usuń projekt"
   },
+  "dateSeparator": {
+    "today": "Dzisiaj",
+    "yesterday": "Wczoraj",
+    "dayBeforeYesterday": "Przedwczoraj"
+  },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",

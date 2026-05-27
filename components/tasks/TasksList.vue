@@ -80,6 +80,87 @@ const handlePreviewRemove = (taskId: string) => {
   handleRemoveTask(taskId)
 }
 
+/* ------------------------- DATE SEPARATORS ----------------------------------- */
+const daysDiff = (displayDate: string, now: Date): number => {
+  const date = new Date(displayDate + 'T00:00:00')
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  return Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+const getMondayOfWeek = (date: Date): Date => {
+  const d = new Date(date)
+  const day = d.getDay() // 0=Sun, 1=Mon, ..., 6=Sat
+  const diff = day === 0 ? -6 : 1 - day
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+const getGroupKey = (displayDate: string, now: Date): string => {
+  const diff = daysDiff(displayDate, now)
+  if (diff >= 0 && diff <= 2) return displayDate
+  const date = new Date(displayDate + 'T00:00:00')
+  const monday = getMondayOfWeek(date)
+  return `week-${monday.toISOString().slice(0, 10)}`
+}
+
+const getGroupSortKey = (displayDate: string, now: Date): string => {
+  const diff = daysDiff(displayDate, now)
+  if (diff >= 0 && diff <= 2) return displayDate
+  const date = new Date(displayDate + 'T00:00:00')
+  const monday = getMondayOfWeek(date)
+  return monday.toISOString().slice(0, 10)
+}
+
+const getDateLabel = (displayDate: string, now: Date): string => {
+  const diff = daysDiff(displayDate, now)
+
+  if (diff === 0) return t('dateSeparator.today')
+  if (diff === 1) return t('dateSeparator.yesterday')
+  if (diff === 2) return t('dateSeparator.dayBeforeYesterday')
+
+  // Weekly range
+  const date = new Date(displayDate + 'T00:00:00')
+  const monday = getMondayOfWeek(date)
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
+  if (monday.getMonth() === sunday.getMonth()) {
+    const month = sunday.toLocaleDateString('pl-PL', { month: 'long' })
+    return `${monday.getDate()}-${sunday.getDate()} ${month}`
+  }
+
+  const monMonth = monday.toLocaleDateString('pl-PL', { month: 'long' })
+  const sunMonth = sunday.toLocaleDateString('pl-PL', { month: 'long' })
+  return `${monday.getDate()} ${monMonth} - ${sunday.getDate()} ${sunMonth}`
+}
+
+const sortedTasks = computed(() => {
+  const now = new Date()
+  return [...tasks.value].sort((a, b) => {
+    const keyA = getGroupSortKey(a.displayDate, now)
+    const keyB = getGroupSortKey(b.displayDate, now)
+    if (keyA !== keyB) return keyA.localeCompare(keyB)
+    return a.order - b.order
+  })
+})
+
+const dateSeparators = computed(() => {
+  const now = new Date()
+  const separators = new Map<string, string>()
+  let lastGroupKey = ''
+
+  for (const task of sortedTasks.value) {
+    const key = getGroupKey(task.displayDate, now)
+    if (key !== lastGroupKey) {
+      separators.set(task.id, getDateLabel(task.displayDate, now))
+      lastGroupKey = key
+    }
+  }
+
+  return separators
+})
+
 /* ------------------------- DRAG AND DROP ----------------------------------- */
 let canDrag = false
 const draggedTaskId = ref<string | null>(null)
@@ -157,12 +238,23 @@ const handleDragOver = (taskId: string, event: DragEvent) => {
 
 const handleDrop = (taskId: string) => {
   if (!draggedTaskId.value || taskId === draggedTaskId.value) return
-  const fromIndex = tasks.value.findIndex(t => t.id === draggedTaskId.value)
-  const overIndex = tasks.value.findIndex(t => t.id === taskId)
+  const draggedTask = tasks.value.find(t => t.id === draggedTaskId.value)
+  const targetTask = tasks.value.find(t => t.id === taskId)
+  if (!draggedTask || !targetTask) return
+
+  const fromIndex = tasks.value.indexOf(draggedTask)
+  const overIndex = tasks.value.indexOf(targetTask)
   if (fromIndex === -1 || overIndex === -1) return
+
   let toIndex = dragOverPosition.value === 'after' ? overIndex + 1 : overIndex
   if (fromIndex < toIndex) toIndex -= 1
-  reorderTask(fromIndex, toIndex)
+
+  const now = new Date()
+  const draggedGroup = getGroupKey(draggedTask.displayDate, now)
+  const targetGroup = getGroupKey(targetTask.displayDate, now)
+  const newDisplayDate = draggedGroup !== targetGroup ? targetTask.displayDate : undefined
+
+  reorderTask(fromIndex, toIndex, newDisplayDate)
 }
 
 const handleDragEnd = () => {
@@ -239,8 +331,8 @@ const updateFocus = () => {
   let firstVisibleIndex = 0
   let foundFirstVisible = false
 
-  for (let i = 0; i < tasks.value.length; i += 1) {
-    const task = tasks.value[i]
+  for (let i = 0; i < sortedTasks.value.length; i += 1) {
+    const task = sortedTasks.value[i]
     if (!task) continue
     const el = taskRefs.value.get(task.id)
     if (!el) continue
@@ -334,35 +426,44 @@ defineExpose({ scrollToBottom })
         @dragover="updateAutoScroll($event)"
       >
         <ul class="scroll-list__list">
-          <li
-            v-for="(task, index) in tasks"
-            :key="task.id"
-            :ref="el => setTaskRef(el as HTMLElement, task.id)"
-            class="scroll-list__item js-scroll-list-item relative"
-            :class="{
-              'item-focus': index === focusIndex,
-              'item-visible': visibleTaskIds.has(task.id),
-            }"
-            draggable="true"
-            @dragstart="handleDragStart(task.id, $event)"
-            @dragover.prevent="handleDragOver(task.id, $event)"
-            @drop.prevent="handleDrop(task.id)"
-            @dragend="handleDragEnd"
-          >
-            <div
-              v-if="dragOverTaskId === task.id"
-              class="absolute inset-x-0 h-0.5 bg-primary rounded-full z-10"
-              :class="dragOverPosition === 'before' ? 'top-[-8px]' : 'bottom-[-9px]'"
-            />
-            <TaskItem
-              :task="task"
-              :dragging="draggedTaskId === task.id"
-              @remove="handleRemoveTask"
-              @edit="handleEditTask"
-              @preview="handlePreviewTask"
-              @handle-pointerdown="handleHandlePointerdown"
-            />
-          </li>
+          <template v-for="(task, index) in sortedTasks" :key="task.id">
+            <li
+              v-if="dateSeparators.has(task.id)"
+              class="scroll-list__separator"
+              aria-hidden="true"
+            >
+              <div class="scroll-list__separator-line" />
+              <span class="scroll-list__separator-label">{{ dateSeparators.get(task.id) }}</span>
+              <div class="scroll-list__separator-line" />
+            </li>
+            <li
+              :ref="el => setTaskRef(el as HTMLElement, task.id)"
+              class="scroll-list__item js-scroll-list-item relative"
+              :class="{
+                'item-focus': index === focusIndex,
+                'item-visible': visibleTaskIds.has(task.id),
+              }"
+              draggable="true"
+              @dragstart="handleDragStart(task.id, $event)"
+              @dragover.prevent="handleDragOver(task.id, $event)"
+              @drop.prevent="handleDrop(task.id)"
+              @dragend="handleDragEnd"
+            >
+              <div
+                v-if="dragOverTaskId === task.id"
+                class="absolute inset-x-0 h-0.5 bg-primary rounded-full z-10"
+                :class="dragOverPosition === 'before' ? 'top-[-8px]' : 'bottom-[-9px]'"
+              />
+              <TaskItem
+                :task="task"
+                :dragging="draggedTaskId === task.id"
+                @remove="handleRemoveTask"
+                @edit="handleEditTask"
+                @preview="handlePreviewTask"
+                @handle-pointerdown="handleHandlePointerdown"
+              />
+            </li>
+          </template>
         </ul>
       </div>
       <div class="scroll-list__fade scroll-list__fade--top" aria-hidden="true"></div>

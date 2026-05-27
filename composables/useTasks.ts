@@ -22,6 +22,14 @@ let firestoreUnsubscribe: (() => void) | null = null
 
 const getLocalStorageKey = (wsId: string) => `how-is-your-progress-tasks--${wsId}`
 
+/** Returns local date as YYYY-MM-DD (avoids UTC shift from toISOString) */
+const toLocalDateString = (d: Date = new Date()): string => {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 const getTasksCol = (db: Firestore, uid: string, wsId: string) =>
   collection(db, 'users', uid, 'workspaces', wsId, 'tasks')
 
@@ -40,7 +48,15 @@ const setupFirestoreListener = (db: Firestore, uid: string, wsId: string) => {
   const q = query(getTasksCol(db, uid, wsId), orderBy('order', 'asc'))
 
   firestoreUnsubscribe = onSnapshot(q, snapshot => {
-    tasks.value = snapshot.docs.map(d => ({ ...(d.data() as Task), id: d.id }))
+    tasks.value = snapshot.docs.map(d => {
+      const data = d.data() as Task
+      return {
+        ...data,
+        id: d.id,
+        displayDate:
+          data.displayDate || (data.createdAt ? toLocalDateString(new Date(data.createdAt)) : toLocalDateString()),
+      }
+    })
   })
 }
 
@@ -67,6 +83,7 @@ const loadFromLocalStorage = (wsId: string) => {
       description: t.description,
       status: t.status,
       createdAt: t.createdAt,
+      displayDate: t.displayDate || toLocalDateString(new Date(t.createdAt)),
       gitUrl: t.gitUrl,
       jiraUrl: t.jiraUrl,
       externalUrl: t.externalUrl,
@@ -127,6 +144,7 @@ export const useTasks = () => {
       description: taskForm.description,
       status: taskForm.taskStatus,
       createdAt: new Date().toISOString(),
+      displayDate: toLocalDateString(),
       gitUrl: taskForm.gitUrl,
       jiraUrl: taskForm.jiraUrl,
       externalUrl: taskForm.externalUrl?.trim() || undefined,
@@ -189,28 +207,45 @@ export const useTasks = () => {
 
   /* --- reorder --- */
 
-  const reorderTask = async (fromIndex: number, toIndex: number): Promise<void> => {
-    if (fromIndex === toIndex) return
+  const reorderTask = async (
+    fromIndex: number,
+    toIndex: number,
+    newDisplayDate?: string
+  ): Promise<void> => {
+    if (fromIndex === toIndex && !newDisplayDate) return
     const wsId = activeWorkspaceId.value!
 
     const arr = [...tasks.value]
     const [item] = arr.splice(fromIndex, 1)
-    if (item) arr.splice(toIndex, 0, item)
+    if (item) {
+      if (newDisplayDate) item.displayDate = newDisplayDate
+      arr.splice(toIndex, 0, item)
+    }
 
     // Optimistic update for smooth drag & drop UX
     tasks.value = arr
 
     if (isLoggedIn.value && currentUser.value) {
       const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
-      const start = Math.min(fromIndex, toIndex)
-      const end = Math.max(fromIndex, toIndex)
-
       const batch = writeBatch($firebaseDb as Firestore)
-      for (let i = start; i <= end; i++) {
-        const task = arr[i]
-        if (!task) continue
-        batch.update(doc(col, task.id), { order: i })
+
+      if (fromIndex === toIndex && newDisplayDate && item) {
+        // Only displayDate changed, no reordering
+        batch.update(doc(col, item.id), { displayDate: newDisplayDate })
+      } else {
+        const start = Math.min(fromIndex, toIndex)
+        const end = Math.max(fromIndex, toIndex)
+        for (let i = start; i <= end; i++) {
+          const task = arr[i]
+          if (!task) continue
+          const update: Record<string, unknown> = { order: i }
+          if (task.id === item?.id && newDisplayDate) {
+            update.displayDate = newDisplayDate
+          }
+          batch.update(doc(col, task.id), update)
+        }
       }
+
       await batch.commit()
     } else {
       saveToLocalStorage(wsId, arr)

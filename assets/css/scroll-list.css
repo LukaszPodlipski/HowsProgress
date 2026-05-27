@@ -75,6 +75,29 @@
   transform: scale(1);
 }
 
+.scroll-list__separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px 12px;
+  list-style: none;
+}
+
+.scroll-list__separator-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.scroll-list__separator-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
 .scroll-list__input {
   max-width: var(--max-content-width);
   margin: 0 auto;

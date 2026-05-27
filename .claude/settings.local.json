@@ -18,7 +18,8 @@
       "Bash(head:*)",
       "Bash(bun run:*)",
       "Bash(claude skills:*)",
-      "Bash(claude plugin:*)"
+      "Bash(claude plugin:*)",
+      "Bash(bunx nuxi:*)"
     ]
   }
 }

@@ -6,6 +6,7 @@ export interface Task {
   description?: string
   status: TaskStatus
   createdAt: string
+  displayDate: string
   gitUrl?: string
   jiraUrl?: string
   externalUrl?: string
