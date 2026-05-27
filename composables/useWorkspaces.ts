@@ -18,7 +18,10 @@ const DEFAULT_WORKSPACE_EMOJI = '📋'
 
 const workspaces = ref<Workspace[]>([])
 const activeWorkspaceId = ref<string | null>(null)
+const workspacesReady = ref(false)
 let workspacesUnsubscribe: (() => void) | null = null
+let ensureDefaultInFlight: Promise<string> | null = null
+let bootstrapWatchRegistered = false
 
 /* --------------------------- HELPERS ----------------------------------- */
 
@@ -47,10 +50,13 @@ const setupFirestoreWorkspacesListener = (db: Firestore, uid: string) => {
     workspacesUnsubscribe = null
   }
 
+  workspacesReady.value = false
+
   const q = query(getWorkspacesCol(db, uid), orderBy('order', 'asc'))
 
   workspacesUnsubscribe = onSnapshot(q, snapshot => {
     workspaces.value = snapshot.docs.map(d => ({ ...(d.data() as Workspace), id: d.id }))
+    workspacesReady.value = true
 
     if (workspaces.value.length === 0) {
       activeWorkspaceId.value = null
@@ -101,6 +107,7 @@ const initWorkspaces = async (db?: Firestore, uid?: string): Promise<void> => {
     // localStorage mode
     const list = loadLocalWorkspaces()
     workspaces.value = list
+    workspacesReady.value = true
 
     if (list.length === 0) {
       activeWorkspaceId.value = null
@@ -121,6 +128,7 @@ const teardownWorkspaces = () => {
   }
   workspaces.value = []
   activeWorkspaceId.value = null
+  workspacesReady.value = false
 }
 
 /* --------------------------- COMPOSABLE ----------------------------------- */
@@ -131,13 +139,33 @@ export const useWorkspaces = () => {
   const ensureDefaultWorkspace = async (): Promise<string> => {
     if (workspaces.value.length > 0) {
       const ws = workspaces.value[0]!
-      setActiveWorkspace(ws.id)
+      if (activeWorkspaceId.value !== ws.id) {
+        setActiveWorkspace(ws.id)
+      }
       return ws.id
     }
 
-    const ws = await addWorkspace(t('workspace.defaultName'), DEFAULT_WORKSPACE_EMOJI)
-    setActiveWorkspace(ws.id)
-    return ws.id
+    if (ensureDefaultInFlight) {
+      return ensureDefaultInFlight
+    }
+
+    ensureDefaultInFlight = (async () => {
+      if (workspaces.value.length > 0) {
+        const ws = workspaces.value[0]!
+        setActiveWorkspace(ws.id)
+        return ws.id
+      }
+
+      const ws = await addWorkspace(t('workspace.defaultName'), DEFAULT_WORKSPACE_EMOJI)
+      setActiveWorkspace(ws.id)
+      return ws.id
+    })()
+
+    try {
+      return await ensureDefaultInFlight
+    } finally {
+      ensureDefaultInFlight = null
+    }
   }
 
   const deleteWorkspace = async (wsId: string): Promise<void> => {
@@ -211,10 +239,22 @@ export const useWorkspaces = () => {
     return newWs
   }
 
+  if (!bootstrapWatchRegistered && import.meta.client) {
+    bootstrapWatchRegistered = true
+    watch(
+      () => [workspacesReady.value, workspaces.value.length] as const,
+      async ([ready, len]) => {
+        if (!ready || len > 0) return
+        await ensureDefaultWorkspace()
+      }
+    )
+  }
+
   return {
     workspaces: readonly(workspaces),
     activeWorkspaceId: readonly(activeWorkspaceId),
     activeWorkspace,
+    workspacesReady: readonly(workspacesReady),
     initWorkspaces,
     teardownWorkspaces,
     setActiveWorkspace,

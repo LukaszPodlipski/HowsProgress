@@ -13,6 +13,16 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const form = useTaskForm(f => emit('submit', f))
+
+const applySuggestion = (text: string) => {
+  form.title.value = text
+  nextTick(() => {
+    const input = document.querySelector<HTMLTextAreaElement>('.scroll-list__input textarea')
+    input?.focus()
+  })
+}
+
+defineExpose({ applySuggestion })
 </script>
 
 <template>

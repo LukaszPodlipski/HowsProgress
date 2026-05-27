@@ -69,5 +69,17 @@
     "localModeDisclaimer": "Bez konta dane są zapisywane tylko lokalnie na tym urządzeniu.",
     "signIn": "Zaloguj się",
     "tagline": "Śledź swoje codzienne zadania w pracy."
+  },
+  "onboarding": {
+    "welcome": "Witaj w How's Progress!",
+    "welcomeNamed": "Cześć, {name}!",
+    "description": "Tu zapisujesz nad czym pracujesz każdego dnia. Dodaj pierwsze zadanie w polu poniżej - albo wybierz gotową sugestię.",
+    "tip1": "Wpisz krótki tytuł np. nazwę ticketa lub temat spotkania",
+    "tip2": "Dodaj link do Git lub Jira, jeśli chcesz mieć szybki dostęp",
+    "tip3": "Przeciągaj zadania, żeby zmienić kolejność",
+    "suggestionsLabel": "Szybki start",
+    "suggestion1": "Code review PR",
+    "suggestion2": "Spotkanie zespołowe",
+    "suggestion3": "Aktualizacja dokumentacji"
   }
 }

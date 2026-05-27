@@ -59,6 +59,24 @@
   list-style: none;
 }
 
+.scroll-list__wrp--empty {
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-list__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 16px 8px 24px;
+  box-sizing: border-box;
+}
+
 .scroll-list__item {
   width: 100%;
   display: block;

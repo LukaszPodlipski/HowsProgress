@@ -5,12 +5,17 @@ import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
 import TaskEditModal from './TaskEditModal.vue'
 import TaskPreviewModal from './TaskPreviewModal.vue'
+import TasksEmptyState from './TasksEmptyState.vue'
 import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
 import { useI18n } from 'vue-i18n'
 
 const { tasks, removeTask, restoreTask, updateTask, reorderTask } = useTasks()
 const { t } = useI18n()
+
+const emit = defineEmits<{
+  (e: 'select-suggestion', title: string): void
+}>()
 
 /* ------------------------- EDIT MODAL ----------------------------------- */
 const editingTask = ref<Task | null>(null)
@@ -144,6 +149,8 @@ const sortedTasks = computed(() => {
     return a.order - b.order
   })
 })
+
+const isEmpty = computed(() => sortedTasks.value.length === 0)
 
 const dateSeparators = computed(() => {
   const now = new Date()
@@ -396,14 +403,20 @@ const getInputElement = (): Element | null => {
 
 const scrollListHeigth = computed(() => {
   const PADDING_HEIGHT = 100
+  const inputEl = getInputElement()
+  const inputHeight =
+    inputBlockHeight.value || (inputEl ? (inputEl as HTMLElement).offsetHeight : 0)
+  const available = windowHeight.value - inputHeight - PADDING_HEIGHT
 
-  if (inputBlockHeight.value === 0) {
-    const el = getInputElement()
-    if (el) return windowHeight.value - (el as HTMLElement).clientHeight - PADDING_HEIGHT
-    return 100
+  if (isEmpty.value) {
+    return Math.max(available, 360)
   }
 
-  return windowHeight.value - inputBlockHeight.value - PADDING_HEIGHT
+  if (inputHeight === 0) {
+    return Math.max(available, 200)
+  }
+
+  return available
 })
 
 const scrollToBottom = () => {
@@ -421,11 +434,15 @@ defineExpose({ scrollToBottom })
       <div
         ref="listContainer"
         class="scroll-list__wrp js-scroll-content js-scroll-list"
+        :class="{ 'scroll-list__wrp--empty': isEmpty }"
         :style="{ height: scrollListHeigth + 'px' }"
         @scroll.passive="updateFocus"
         @dragover="updateAutoScroll($event)"
       >
-        <ul class="scroll-list__list">
+        <div v-if="isEmpty" class="scroll-list__empty">
+          <TasksEmptyState @select-suggestion="emit('select-suggestion', $event)" />
+        </div>
+        <ul v-else class="scroll-list__list">
           <template v-for="(task, index) in sortedTasks" :key="task.id">
             <li
               v-if="dateSeparators.has(task.id)"
@@ -467,7 +484,11 @@ defineExpose({ scrollToBottom })
         </ul>
       </div>
       <div class="scroll-list__fade scroll-list__fade--top" aria-hidden="true"></div>
-      <div class="scroll-list__fade scroll-list__fade--bottom" aria-hidden="true"></div>
+      <div
+        v-if="!isEmpty"
+        class="scroll-list__fade scroll-list__fade--bottom"
+        aria-hidden="true"
+      ></div>
     </div>
   </div>
 

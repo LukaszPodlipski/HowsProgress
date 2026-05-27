@@ -5,9 +5,14 @@ import { useTasks } from '@/composables/useTasks'
 import { useWorkspaces } from '@/composables/useWorkspaces'
 
 const tasksList = ref<InstanceType<typeof TasksList> | null>(null)
+const taskInput = ref<InstanceType<typeof TaskInput> | null>(null)
 
 const { fetchTasks, addTask } = useTasks()
 const { activeWorkspaceId } = useWorkspaces()
+
+const applySuggestion = (title: string) => {
+  taskInput.value?.applySuggestion(title)
+}
 
 /* --------------------------- FETCH TASKS AND HANDLE STORAGE EVENT ----------------------------------- */
 onBeforeMount(() => {
@@ -44,9 +49,9 @@ const addNewTask = (taskForm: TaskForm) => {
 <template>
   <div class="app-view-wrapper">
     <div class="scroll-list-container">
-      <TasksList ref="tasksList" />
+      <TasksList ref="tasksList" @select-suggestion="applySuggestion" />
       <div class="scroll-list__input">
-        <TaskInput @submit="addNewTask" />
+        <TaskInput ref="taskInput" @submit="addNewTask" />
       </div>
     </div>
   </div>
