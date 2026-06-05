@@ -13,24 +13,53 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { PlusIcon } from 'lucide-vue-next'
 import { Textarea } from '@/components/ui/textarea'
 import TaskInputUrlRow from './TaskInputUrlRow.vue'
 import type { useTaskForm } from '@/composables/useTaskForm'
+import { useEventListener, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
-const props = defineProps<{
-  form: ReturnType<typeof useTaskForm>
-  fillHeight?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    form: ReturnType<typeof useTaskForm>
+    fillHeight?: boolean
+    showAddElementShortcuts?: boolean
+  }>(),
+  { showAddElementShortcuts: false }
+)
+
+const shortcutKbdClass =
+  'pointer-events-none inline-flex h-5 min-w-5 select-none items-center justify-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground'
 
 const emit = defineEmits<{
-  titleKeydown: [event: KeyboardEvent]
+  contentKeydown: [event: KeyboardEvent]
 }>()
 
 const { t } = useI18n()
 
-const isTitleFocused = ref(false)
+const isTaskContentFocused = ref(false)
+const isDesktop = useMediaQuery('(min-width: 769px)')
+
+const isTaskContentField = (target: EventTarget | null) =>
+  target instanceof HTMLElement && target.closest('[data-task-content-field]') !== null
+
+const onTaskContentFocusIn = (event: FocusEvent) => {
+  if (isTaskContentField(event.target)) {
+    isTaskContentFocused.value = true
+  }
+}
+
+const onTaskContentFocusOut = (event: FocusEvent) => {
+  if (isTaskContentField(event.relatedTarget)) return
+  isTaskContentFocused.value = false
+}
+
+const onFormKeydown = (event: KeyboardEvent) => {
+  if (!isTaskContentField(event.target)) return
+  emit('contentKeydown', event)
+}
 
 const presentation = useProductTourPresentation()
 const localAddMenuOpen = ref(false)
@@ -76,10 +105,52 @@ const {
   removeExternalElement,
   isSubmitDisabled,
 } = props.form
+
+const TITLE_DESCRIPTION_HINT_MIN_LENGTH = 30
+
+const isAddElementMenuExhausted = computed(() => visibleAddElementOptions.value.length === 0)
+
+const showDescriptionShortcutHint = computed(
+  () =>
+    props.showAddElementShortcuts &&
+    isDesktop.value &&
+    !hasDescriptionElement.value &&
+    (title.value?.trim().length ?? 0) > TITLE_DESCRIPTION_HINT_MIN_LENGTH
+)
+
+const canUseAddElementShortcuts = computed(
+  () => !isAddElementMenuExhausted.value && (addElementMenuOpen.value || isTaskContentFocused.value)
+)
+
+watch(isAddElementMenuExhausted, exhausted => {
+  if (exhausted) addElementMenuOpen.value = false
+})
+
+useEventListener('keydown', (event: KeyboardEvent) => {
+  if (!props.showAddElementShortcuts || !isDesktop.value || !canUseAddElementShortcuts.value) {
+    return
+  }
+  if (!event.altKey || event.ctrlKey || event.metaKey) return
+
+  const option = visibleAddElementOptions.value.find(
+    item => item.shortcutKey.toLowerCase() === event.key.toLowerCase()
+  )
+  if (!option) return
+
+  event.preventDefault()
+  onAddElement(option.type)
+  addElementMenuOpen.value = false
+})
 </script>
 
 <template>
-  <form :class="{ 'flex flex-col flex-1 min-h-0': fillHeight }" @submit.prevent="handleSubmit">
+  <form
+    :class="{ 'flex flex-col flex-1 min-h-0': fillHeight }"
+    @focusin="onTaskContentFocusIn"
+    @focusout="onTaskContentFocusOut"
+    @keydown="onFormKeydown"
+    @submit.prevent="handleSubmit"
+  >
     <InputGroup :class="{ 'flex-1 min-h-0': fillHeight }">
       <InputGroupTextarea
         v-model="title"
@@ -94,10 +165,28 @@ const {
           'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
           'flex-none': fillHeight,
         }"
-        @focus="isTitleFocused = true"
-        @blur="isTitleFocused = false"
-        @keydown="emit('titleKeydown', $event)"
       />
+
+      <Transition
+        enter-active-class="transition-opacity duration-150 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <p
+          v-if="showDescriptionShortcutHint"
+          class="flex w-full items-center gap-1.5 px-3 pb-2 text-xs text-muted-foreground"
+        >
+          <span class="flex shrink-0 items-center gap-0.5" aria-hidden="true">
+            <kbd :class="shortcutKbdClass">Alt</kbd>
+            <span class="text-[10px]">+</span>
+            <kbd :class="shortcutKbdClass">O</kbd>
+          </span>
+          <span>{{ t('task.addDescriptionShortcutHint') }}</span>
+        </p>
+      </Transition>
 
       <div
         v-if="hasDescriptionElement"
@@ -109,6 +198,7 @@ const {
           v-bind="descriptionAttrs"
           :placeholder="t('task.descriptionPlaceholder')"
           data-slot="input-group-control"
+          data-task-content-field
           :maxlength="1000"
           class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/50"
           :class="{
@@ -164,7 +254,7 @@ const {
       />
 
       <InputGroupAddon align="block-end">
-        <DropdownMenu v-model:open="addElementMenuOpen">
+        <DropdownMenu v-if="!isAddElementMenuExhausted" v-model:open="addElementMenuOpen">
           <DropdownMenuTrigger as-child>
             <InputGroupButton
               variant="outline"
@@ -179,20 +269,54 @@ const {
           <DropdownMenuContent
             side="top"
             align="start"
-            class="[--radius:0.95rem] flex min-w-52 flex-col gap-1"
+            class="[--radius:0.95rem] flex flex-col gap-1"
+            :class="showAddElementShortcuts && isDesktop ? 'min-w-60' : 'min-w-52'"
             data-tour="add-element-menu"
             :modal="presentation.isActive.value"
           >
             <DropdownMenuItem
               v-for="option in visibleAddElementOptions"
               :key="option.type"
+              class="group w-full justify-between"
               @click="onAddElement(option.type)"
             >
-              <Icon :name="option.icon" class="size-4 shrink-0" />
-              {{ option.label }}
+              <span class="flex min-w-0 items-center gap-2">
+                <Icon :name="option.icon" class="size-4 shrink-0" />
+                <span class="truncate">{{ option.label }}</span>
+              </span>
+              <span
+                v-if="showAddElementShortcuts && isDesktop"
+                class="ml-3 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-highlighted:opacity-100"
+                aria-hidden="true"
+              >
+                <kbd :class="shortcutKbdClass">Alt</kbd>
+                <span class="text-[10px] text-muted-foreground">+</span>
+                <kbd :class="shortcutKbdClass">{{ option.shortcutKey }}</kbd>
+              </span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <TooltipProvider v-else :delay-duration="500">
+          <Tooltip>
+            <TooltipTrigger as-child>
+              <span class="inline-flex">
+                <InputGroupButton
+                  variant="outline"
+                  class="rounded-full"
+                  size="icon-xs"
+                  disabled
+                  data-tour="add-element-trigger"
+                >
+                  <PlusIcon class="size-4" />
+                  <span class="sr-only">{{ t('task.addElementAriaLabel') }}</span>
+                </InputGroupButton>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              {{ t('task.allElementsAdded') }}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
 
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -231,7 +355,7 @@ const {
             <slot
               name="submit"
               :is-submit-disabled="isSubmitDisabled"
-              :is-title-focused="isTitleFocused"
+              :is-task-content-focused="isTaskContentFocused"
             />
           </div>
         </div>

@@ -80,18 +80,31 @@ export function useTaskForm(
     type: AddElementType
     label: string
     icon: string
+    shortcutKey: string
   }> = [
     {
       type: AddElementType.DESCRIPTION,
       label: t('task.elementDescription'),
       icon: 'lucide:align-left',
+      shortcutKey: 'O',
     },
-    { type: AddElementType.GIT, label: t('task.elementGit'), icon: 'lucide:git-branch' },
-    { type: AddElementType.JIRA, label: t('task.elementJira'), icon: 'simple-icons:jira' },
+    {
+      type: AddElementType.GIT,
+      label: t('task.elementGit'),
+      icon: 'lucide:git-branch',
+      shortcutKey: 'G',
+    },
+    {
+      type: AddElementType.JIRA,
+      label: t('task.elementJira'),
+      icon: 'simple-icons:jira',
+      shortcutKey: 'J',
+    },
     {
       type: AddElementType.EXTERNAL,
       label: t('task.elementExternal'),
       icon: 'lucide:external-link',
+      shortcutKey: 'L',
     },
   ]
 

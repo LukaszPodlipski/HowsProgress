@@ -24,7 +24,7 @@ const applySuggestion = (text: string) => {
   })
 }
 
-const onTitleKeydown = (event: KeyboardEvent) => {
+const onContentKeydown = (event: KeyboardEvent) => {
   if (!isDesktop.value) return
   if (!event.altKey || event.key.toLowerCase() !== 's') return
   event.preventDefault()
@@ -36,19 +36,19 @@ defineExpose({ applySuggestion })
 </script>
 
 <template>
-  <TaskFormFields :form="form" @title-keydown="onTitleKeydown">
-    <template #submit="{ isSubmitDisabled, isTitleFocused }">
+  <TaskFormFields :form="form" show-add-element-shortcuts @content-keydown="onContentKeydown">
+    <template #submit="{ isSubmitDisabled, isTaskContentFocused }">
       <div class="flex items-center gap-2">
         <Transition
-          enter-active-class="transition-opacity duration-300 ease-out"
+          enter-active-class="transition-opacity duration-150 ease-out"
           enter-from-class="opacity-0"
           enter-to-class="opacity-100"
-          leave-active-class="transition-opacity duration-150 ease-in"
+          leave-active-class="transition-opacity duration-100 ease-in"
           leave-from-class="opacity-100"
           leave-to-class="opacity-0"
         >
           <span
-            v-if="isTitleFocused && isDesktop && !isSubmitDisabled"
+            v-if="isTaskContentFocused && isDesktop && !isSubmitDisabled"
             class="flex items-center gap-0.5"
             :aria-label="t('task.submitShortcutAriaLabel')"
           >
