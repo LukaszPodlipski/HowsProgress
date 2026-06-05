@@ -47,7 +47,7 @@ const { open } = useSidebar()
       <AppSidebarWorkspaces />
     </SidebarContent>
 
-    <SidebarFooter>
+    <SidebarFooter data-tour="account">
       <SidebarMenu>
         <SidebarMenuItem>
           <template v-if="isLoggedIn">

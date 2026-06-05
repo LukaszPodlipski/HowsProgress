@@ -19,6 +19,7 @@ const emit = defineEmits<{
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
+      data-tour="task-preview-modal"
       class="gap-0 border-0 bg-transparent p-0 shadow-none"
       :class="{ 'max-w-xl': !sourceWidth }"
       :style="sourceWidth ? { width: sourceWidth + 'px', maxWidth: sourceWidth + 'px' } : undefined"

@@ -81,5 +81,66 @@
     "suggestion1": "Code review PR",
     "suggestion2": "Spotkanie zespołowe",
     "suggestion3": "Aktualizacja dokumentacji"
+  },
+  "productTour": {
+    "next": "Dalej",
+    "prev": "Wstecz",
+    "done": "Zakończ",
+    "demo": {
+      "workspaces": {
+        "main": "Aplikacja webowa",
+        "docs": "Dokumentacja"
+      },
+      "tasks": {
+        "review": "Code review PR #42",
+        "standup": "Standup zespołu",
+        "bugfix": "Naprawa walidacji formularza",
+        "bugfixDescription": "Obsługa błędów przy zapisie zadania z pustym tytułem.",
+        "readme": "Aktualizacja README"
+      }
+    },
+    "steps": {
+      "welcome": {
+        "title": "Przewodnik po aplikacji",
+        "description": "Przejdź krótki przewodnik i zacznij korzystać z aplikacji. Możesz go przerwać w dowolnym momencie."
+      },
+      "workspaces": {
+        "title": "Projekty",
+        "description": "Panel służy do przełączania projektów i tworzenia nowych. Każdy projekt ma odrębną listę zadań."
+      },
+      "taskInput": {
+        "title": "Nowe zadanie",
+        "description": "Wprowadź tytuł i zatwierdź formularz. Status ustawia się przyciskiem obok ikony plus."
+      },
+      "addElementTrigger": {
+        "title": "Dodatkowe pola",
+        "description": "Przycisk plus otwiera listę elementów, które można dodać do zadania."
+      },
+      "addElementMenu": {
+        "title": "Elementy zadania",
+        "description": "Dostępne są m.in. opis, link do repozytorium Git, odnośnik do Jira oraz zewnętrzny adres URL. Elementy można usuwać w dowolnym momencie."
+      },
+      "taskList": {
+        "title": "Lista zadań",
+        "description": "Zadania są pogrupowane według dat. Kolejność zmienia się przez przeciągnięcie karty."
+      },
+      "demoTask": {
+        "title": "Szczegóły zadania",
+        "description": "Kliknięcie karty otwiera widok szczegółów. W następnym kroku zobaczysz ten widok na przykładzie."
+      },
+      "taskPreview": {
+        "title": "Podgląd zadania",
+        "description": "Widok prezentuje tytuł, status, opis oraz powiązane linki. Stąd można edytować lub usunąć zadanie."
+      },
+      "taskEdit": {
+        "title": "Edycja zadania",
+        "description": "Formularz umożliwia zmianę wszystkich pól, dodawanie elementów z menu plus oraz zapisanie zmian przyciskiem na dole."
+      },
+      "account": {
+        "title": "Konto",
+        "descriptionLoggedIn": "Konto Google synchronizuje projekty i zadania między urządzeniami. Wylogowanie jest dostępne w tym miejscu.",
+        "descriptionLocal": "Dane są przechowywane wyłącznie na tym urządzeniu. Logowanie przez Google umożliwia synchronizację między urządzeniami."
+      }
+    }
   }
 }

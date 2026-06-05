@@ -45,7 +45,7 @@ const handleDeleteConfirm = async (wsId: string) => {
 </script>
 
 <template>
-  <SidebarGroup class="pr-1!">
+  <SidebarGroup class="pr-1!" data-tour="workspaces">
     <SidebarGroupLabel>{{ t('workspace.sectionLabel') }}</SidebarGroupLabel>
     <SidebarGroupContent>
       <SidebarMenu>

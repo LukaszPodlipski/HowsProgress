@@ -95,6 +95,7 @@ watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
   <template v-else>
     <SidebarProvider>
       <AppSidebar />
+      <AppProductTour :blocked="showSyncDialog" />
       <SidebarInset>
         <header class="flex h-12 shrink-0 items-center gap-2 px-4 border-b border-border/50">
           <SidebarTrigger class="-ml-1" />

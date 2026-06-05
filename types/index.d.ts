@@ -20,3 +20,10 @@ export interface Workspace {
   order: number
   createdAt: string
 }
+
+export type ProductTourStatus = 'completed' | 'skipped'
+
+export interface UserProfile {
+  productTourStatus?: ProductTourStatus
+  productTourAt?: string
+}

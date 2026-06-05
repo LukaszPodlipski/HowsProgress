@@ -9,6 +9,7 @@ const taskInput = ref<InstanceType<typeof TaskInput> | null>(null)
 
 const { fetchTasks, addTask } = useTasks()
 const { activeWorkspaceId } = useWorkspaces()
+const { setTourTargetsReady } = useProductTour()
 
 const applySuggestion = (title: string) => {
   taskInput.value?.applySuggestion(title)
@@ -20,6 +21,7 @@ onBeforeMount(() => {
 })
 
 onMounted(() => {
+  setTourTargetsReady(true)
   window.addEventListener('storage', fetchTasks)
   scrollTo({
     top: document.body.scrollHeight,
@@ -28,6 +30,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  setTourTargetsReady(false)
   window.removeEventListener('storage', fetchTasks)
 })
 
@@ -50,7 +53,7 @@ const addNewTask = (taskForm: TaskForm) => {
   <div class="app-view-wrapper">
     <div class="scroll-list-container">
       <TasksList ref="tasksList" @select-suggestion="applySuggestion" />
-      <div class="scroll-list__input">
+      <div class="scroll-list__input" data-tour="task-input">
         <TaskInput ref="taskInput" @submit="addNewTask" />
       </div>
     </div>

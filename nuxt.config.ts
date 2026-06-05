@@ -28,7 +28,12 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ['@/assets/css/tailwind.css', '@/assets/css/scroll-list.css', 'vue-sonner/style.css'],
+  css: [
+    '@/assets/css/tailwind.css',
+    '@/assets/css/scroll-list.css',
+    '@/assets/css/product-tour.css',
+    'vue-sonner/style.css',
+  ],
 
   vite: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

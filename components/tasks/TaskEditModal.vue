@@ -40,6 +40,7 @@ const form = useTaskForm(
 <template>
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent
+      data-tour="task-edit-modal"
       class="gap-0 p-0 flex flex-col"
       :class="{ 'max-w-xl': !sourceWidth }"
       :style="[

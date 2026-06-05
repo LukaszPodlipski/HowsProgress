@@ -1,0 +1,64 @@
+@import 'driver.js/dist/driver.css';
+
+.driver-popover.product-tour-popover {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 35%);
+  max-width: 320px;
+}
+
+.driver-popover.product-tour-popover .driver-popover-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.driver-popover.product-tour-popover .driver-popover-description {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+}
+
+.driver-popover.product-tour-popover .driver-popover-progress-text {
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.driver-popover.product-tour-popover button {
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 0.8125rem;
+  text-shadow: none;
+}
+
+.driver-popover.product-tour-popover .driver-popover-next-btn,
+.driver-popover.product-tour-popover .driver-popover-done-btn {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+}
+
+.driver-popover.product-tour-popover .driver-popover-prev-btn {
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.driver-popover.product-tour-popover .driver-popover-close-btn {
+  color: var(--muted-foreground);
+}
+
+.driver-popover.product-tour-popover .driver-popover-arrow {
+  border-color: var(--card);
+}
+
+.driver-active [data-tour='add-element-menu'],
+.driver-active [data-tour='task-preview-modal'],
+.driver-active [data-tour='task-edit-modal'] {
+  pointer-events: auto;
+}
+
+.driver-active-element[data-tour='task-preview-modal'],
+.driver-active-element[data-tour='task-edit-modal'] {
+  z-index: 10001 !important;
+}

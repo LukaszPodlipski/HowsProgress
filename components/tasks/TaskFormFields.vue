@@ -26,6 +26,21 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
+const presentation = useProductTourPresentation()
+const localAddMenuOpen = ref(false)
+
+const addElementMenuOpen = computed({
+  get: () =>
+    presentation.isActive.value ? presentation.addElementMenuOpen.value : localAddMenuOpen.value,
+  set: (open: boolean) => {
+    if (presentation.isActive.value) {
+      presentation.addElementMenuOpen.value = open
+    } else {
+      localAddMenuOpen.value = open
+    }
+  },
+})
+
 const {
   handleSubmit,
   errors,
@@ -140,9 +155,14 @@ const {
       />
 
       <InputGroupAddon align="block-end">
-        <DropdownMenu>
+        <DropdownMenu v-model:open="addElementMenuOpen">
           <DropdownMenuTrigger as-child>
-            <InputGroupButton variant="outline" class="rounded-full" size="icon-xs">
+            <InputGroupButton
+              variant="outline"
+              class="rounded-full"
+              size="icon-xs"
+              data-tour="add-element-trigger"
+            >
               <PlusIcon class="size-4" />
               <span class="sr-only">{{ t('task.addElementAriaLabel') }}</span>
             </InputGroupButton>
@@ -151,6 +171,8 @@ const {
             side="top"
             align="start"
             class="[--radius:0.95rem] flex min-w-52 flex-col gap-1"
+            data-tour="add-element-menu"
+            :modal="presentation.isActive.value"
           >
             <DropdownMenuItem
               v-for="option in visibleAddElementOptions"

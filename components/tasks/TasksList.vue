@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTasks } from '@/composables/useTasks'
+import { getTourDemoPrimaryTaskId } from '@/composables/useTourDemoData'
 import { useWindowSize } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
@@ -12,6 +13,9 @@ import { useI18n } from 'vue-i18n'
 
 const { tasks, removeTask, restoreTask, updateTask, reorderTask } = useTasks()
 const { t } = useI18n()
+const presentation = useProductTourPresentation()
+
+const tourDemoPrimaryTaskId = computed(() => getTourDemoPrimaryTaskId())
 
 const emit = defineEmits<{
   (e: 'select-suggestion', title: string): void
@@ -34,6 +38,9 @@ const handleEditTask = (taskId: string) => {
 }
 
 const handleModalOpenChange = (open: boolean) => {
+  if (!open && presentation.isActive.value && presentation.editTaskId.value) {
+    return
+  }
   isEditModalOpen.value = open
   if (!open) {
     setTimeout(() => {
@@ -42,6 +49,29 @@ const handleModalOpenChange = (open: boolean) => {
     }, 250)
   }
 }
+
+watch(
+  () => presentation.previewTaskId.value,
+  taskId => {
+    if (taskId) {
+      handlePreviewTask(taskId)
+    } else if (!presentation.editTaskId.value) {
+      isPreviewModalOpen.value = false
+    }
+  }
+)
+
+watch(
+  () => presentation.editTaskId.value,
+  taskId => {
+    if (taskId) {
+      isPreviewModalOpen.value = false
+      handleEditTask(taskId)
+    } else {
+      isEditModalOpen.value = false
+    }
+  }
+)
 
 const handleSaveTask = (form: TaskForm) => {
   if (editingTask.value) {
@@ -66,6 +96,9 @@ const handlePreviewTask = (taskId: string) => {
 }
 
 const handlePreviewModalOpenChange = (open: boolean) => {
+  if (!open && presentation.isActive.value && presentation.previewTaskId.value) {
+    return
+  }
   isPreviewModalOpen.value = open
   if (!open) {
     setTimeout(() => {
@@ -429,7 +462,7 @@ defineExpose({ scrollToBottom })
 </script>
 
 <template>
-  <div class="scroll-list">
+  <div class="scroll-list" data-tour="task-list">
     <div class="scroll-list__wrp-frame">
       <div
         ref="listContainer"
@@ -456,6 +489,7 @@ defineExpose({ scrollToBottom })
             <li
               :ref="el => setTaskRef(el as HTMLElement, task.id)"
               class="scroll-list__item js-scroll-list-item relative"
+              :data-tour="task.id === tourDemoPrimaryTaskId ? 'demo-task' : undefined"
               :class="{
                 'item-focus': index === focusIndex,
                 'item-visible': visibleTaskIds.has(task.id),
