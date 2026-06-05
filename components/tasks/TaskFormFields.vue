@@ -24,7 +24,13 @@ const props = defineProps<{
   fillHeight?: boolean
 }>()
 
+const emit = defineEmits<{
+  titleKeydown: [event: KeyboardEvent]
+}>()
+
 const { t } = useI18n()
+
+const isTitleFocused = ref(false)
 
 const presentation = useProductTourPresentation()
 const localAddMenuOpen = ref(false)
@@ -88,6 +94,9 @@ const {
           'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
           'flex-none': fillHeight,
         }"
+        @focus="isTitleFocused = true"
+        @blur="isTitleFocused = false"
+        @keydown="emit('titleKeydown', $event)"
       />
 
       <div
@@ -219,7 +228,11 @@ const {
         <div class="flex items-center gap-2" :class="{ 'ml-auto': !hasDescriptionElement }">
           <Separator v-if="hasDescriptionElement" orientation="vertical" class="h-4!" />
           <div>
-            <slot name="submit" :is-submit-disabled="isSubmitDisabled" />
+            <slot
+              name="submit"
+              :is-submit-disabled="isSubmitDisabled"
+              :is-title-focused="isTitleFocused"
+            />
           </div>
         </div>
       </InputGroupAddon>

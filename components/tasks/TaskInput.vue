@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import { ArrowUpIcon } from 'lucide-vue-next'
 import { InputGroupButton } from '@/components/ui/input-group'
 import TaskFormFields from './TaskFormFields.vue'
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const form = useTaskForm(f => emit('submit', f))
+const isDesktop = useMediaQuery('(min-width: 769px)')
 
 const applySuggestion = (text: string) => {
   form.title.value = text
@@ -22,22 +24,58 @@ const applySuggestion = (text: string) => {
   })
 }
 
+const onTitleKeydown = (event: KeyboardEvent) => {
+  if (!isDesktop.value) return
+  if (!event.altKey || event.key.toLowerCase() !== 's') return
+  event.preventDefault()
+  if (form.isSubmitDisabled.value) return
+  form.handleSubmit(event)
+}
+
 defineExpose({ applySuggestion })
 </script>
 
 <template>
-  <TaskFormFields :form="form">
-    <template #submit="{ isSubmitDisabled }">
-      <InputGroupButton
-        type="submit"
-        variant="default"
-        class="rounded-full"
-        size="icon-xs"
-        :disabled="isSubmitDisabled"
-      >
-        <ArrowUpIcon class="size-4" />
-        <span class="sr-only">{{ t('task.send') }}</span>
-      </InputGroupButton>
+  <TaskFormFields :form="form" @title-keydown="onTitleKeydown">
+    <template #submit="{ isSubmitDisabled, isTitleFocused }">
+      <div class="flex items-center gap-2">
+        <Transition
+          enter-active-class="transition-opacity duration-300 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition-opacity duration-150 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
+        >
+          <span
+            v-if="isTitleFocused && isDesktop && !isSubmitDisabled"
+            class="flex items-center gap-0.5"
+            :aria-label="t('task.submitShortcutAriaLabel')"
+          >
+            <kbd
+              class="pointer-events-none inline-flex h-5 min-w-5 select-none items-center justify-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground"
+            >
+              Alt
+            </kbd>
+            <span class="text-[10px] text-muted-foreground">+</span>
+            <kbd
+              class="pointer-events-none inline-flex h-5 min-w-5 select-none items-center justify-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground"
+            >
+              S
+            </kbd>
+          </span>
+        </Transition>
+        <InputGroupButton
+          type="submit"
+          variant="default"
+          class="rounded-full"
+          size="icon-xs"
+          :disabled="isSubmitDisabled"
+        >
+          <ArrowUpIcon class="size-4" />
+          <span class="sr-only">{{ t('task.send') }}</span>
+        </InputGroupButton>
+      </div>
     </template>
   </TaskFormFields>
 </template>

@@ -3,6 +3,7 @@
     "titlePlaceholder": "Tytuł zadania...",
     "descriptionPlaceholder": "Opis (opcjonalnie)...",
     "send": "Wyślij",
+    "submitShortcutAriaLabel": "Skrót klawiszowy: Alt plus S, wyślij zadanie",
     "save": "Zapisz",
     "editModalTitle": "Edytuj zadanie",
     "dragHandleAriaLabel": "Przeciągnij zadanie",
