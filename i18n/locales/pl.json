@@ -130,15 +130,15 @@
       },
       "demoTask": {
         "title": "Szczegóły zadania",
-        "description": "Kliknięcie karty otwiera widok szczegółów. W następnym kroku zobaczysz ten widok na przykładzie."
+        "description": "Kliknięcie karty rozwija długi opis bezpośrednio na liście — bez osobnego okna podglądu."
       },
-      "taskPreview": {
-        "title": "Podgląd zadania",
-        "description": "Widok prezentuje tytuł, status, opis oraz powiązane linki. Stąd można edytować lub usunąć zadanie."
+      "demoTaskEdit": {
+        "title": "Edycja zadania",
+        "description": "Ikona ołówka otwiera formularz edycji w oknie modalnym."
       },
       "taskEdit": {
-        "title": "Edycja zadania",
-        "description": "Formularz umożliwia zmianę wszystkich pól, dodawanie elementów z menu plus oraz zapisanie zmian przyciskiem na dole."
+        "title": "Formularz edycji",
+        "description": "W oknie modalnym możesz zmienić wszystkie pola, dodać elementy z menu plus i zapisać zmiany przyciskiem na dole."
       },
       "account": {
         "title": "Konto",

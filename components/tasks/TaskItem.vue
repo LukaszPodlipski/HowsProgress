@@ -18,6 +18,12 @@ const props = withDefaults(
     embedded?: boolean
     /** When true, action buttons (including drag handle) stay visible without hover */
     showActions?: boolean
+    /** When true, description is expanded (e.g. during product tour) */
+    expanded?: boolean
+    /** data-tour value for the card root (e.g. product tour) */
+    tourId?: string
+    /** data-tour value for the edit button (e.g. product tour) */
+    editButtonTour?: string
   }>(),
   {
     clickable: true,
@@ -25,12 +31,15 @@ const props = withDefaults(
     descriptionAlwaysExpanded: false,
     embedded: false,
     showActions: false,
+    expanded: false,
+    tourId: undefined,
+    editButtonTour: undefined,
     class: '',
   }
 )
 
 const emit = defineEmits<{
-  (e: 'remove' | 'edit' | 'preview', taskId: string): void
+  (e: 'remove' | 'edit', taskId: string): void
   (e: 'close' | 'drag-end'): void
   (e: 'drag-start', taskId: string, event: DragEvent): void
 }>()
@@ -70,23 +79,42 @@ watch(
   }
 )
 
+watch(
+  () => props.expanded,
+  value => {
+    if (value) isExpanded.value = true
+  },
+  { immediate: true }
+)
+
 const hasLinks = computed(
   () => !!(props.task.gitUrl || props.task.jiraUrl || props.task.externalUrl)
 )
+
+const isExpandable = computed(
+  () => !props.descriptionAlwaysExpanded && !props.embedded && isOverflowing.value
+)
+
+const handleItemClick = () => {
+  if (!props.clickable || !isExpandable.value) return
+  isExpanded.value = !isExpanded.value
+}
 </script>
 
 <template>
   <Item
     variant="outline"
+    :data-tour="tourId"
+    :data-task-id="task.id"
     class="relative bg-card transition-all duration-200 ease-out"
     :class="[
       props.embedded ? 'select-text' : 'select-none',
-      props.clickable && 'cursor-pointer hover:border-accent active:bg-accent/60',
+      props.clickable && isExpandable && 'cursor-pointer hover:border-accent active:bg-accent/60',
       props.dragging &&
         'opacity-60 scale-[0.95] ring-2 ring-primary/70 ring-offset-2 ring-offset-background shadow-lg',
       props.class,
     ]"
-    @click="props.clickable && emit('preview', task.id)"
+    @click="handleItemClick"
   >
     <ItemContent>
       <div class="flex items-start justify-between gap-4">
@@ -118,6 +146,7 @@ const hasLinks = computed(
           <button
             type="button"
             class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
+            :data-tour="editButtonTour"
             :aria-label="t('task.editAriaLabel')"
             @click.stop="emit('edit', task.id)"
           >

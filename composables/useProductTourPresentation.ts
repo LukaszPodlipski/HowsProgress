@@ -1,6 +1,6 @@
 const isActive = ref(false)
 const addElementMenuOpen = ref(false)
-const previewTaskId = ref<string | null>(null)
+const expandedTaskId = ref<string | null>(null)
 const editTaskId = ref<string | null>(null)
 
 export const useProductTourPresentation = () => {
@@ -11,7 +11,7 @@ export const useProductTourPresentation = () => {
 
   const reset = () => {
     addElementMenuOpen.value = false
-    previewTaskId.value = null
+    expandedTaskId.value = null
     editTaskId.value = null
   }
 
@@ -23,31 +23,36 @@ export const useProductTourPresentation = () => {
     addElementMenuOpen.value = false
   }
 
-  const openPreview = (taskId: string) => {
+  const expandTask = (taskId: string) => {
     editTaskId.value = null
-    previewTaskId.value = taskId
+    expandedTaskId.value = taskId
+  }
+
+  const closeExpandedTask = () => {
+    expandedTaskId.value = null
   }
 
   const openEdit = (taskId: string) => {
-    previewTaskId.value = null
+    expandedTaskId.value = null
     editTaskId.value = taskId
   }
 
   const closeModals = () => {
-    previewTaskId.value = null
+    expandedTaskId.value = null
     editTaskId.value = null
   }
 
   return {
     isActive: readonly(isActive),
     addElementMenuOpen,
-    previewTaskId,
+    expandedTaskId,
     editTaskId,
     setActive,
     reset,
     openAddElementMenu,
     closeAddElementMenu,
-    openPreview,
+    expandTask,
+    closeExpandedTask,
     openEdit,
     closeModals,
   }

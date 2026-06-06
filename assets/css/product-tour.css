@@ -53,12 +53,14 @@
 }
 
 .driver-active [data-tour='add-element-menu'],
-.driver-active [data-tour='task-preview-modal'],
+.driver-active [data-tour='demo-task'],
+.driver-active [data-tour='demo-task-edit'],
 .driver-active [data-tour='task-edit-modal'] {
   pointer-events: auto;
 }
 
-.driver-active-element[data-tour='task-preview-modal'],
+.driver-active-element[data-tour='demo-task'],
+.driver-active-element[data-tour='demo-task-edit'],
 .driver-active-element[data-tour='task-edit-modal'] {
   z-index: 10001 !important;
 }

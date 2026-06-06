@@ -21,11 +21,13 @@ let tourPersisted = false
 let isResettingTour = false
 let tourEngaged = false
 let skipAddElementMenuStepSetup = false
-let skipTaskPreviewStepSetup = false
+let skipDemoTaskStepSetup = false
+let skipDemoTaskEditStepSetup = false
 let skipTaskEditStepSetup = false
 
 const ADD_ELEMENT_MENU_SELECTOR = '[data-tour="add-element-menu"]'
-const TASK_PREVIEW_MODAL_SELECTOR = '[data-tour="task-preview-modal"]'
+const DEMO_TASK_SELECTOR = '[data-tour="demo-task"]'
+const DEMO_TASK_EDIT_SELECTOR = '[data-tour="demo-task-edit"]'
 const TASK_EDIT_MODAL_SELECTOR = '[data-tour="task-edit-modal"]'
 
 const readLocalStatus = (): ProductTourStatus | null => {
@@ -89,29 +91,45 @@ const waitForTourTarget = async (selector: string) => {
   })
 }
 
+const scrollTourTargetIntoView = (selector: string) => {
+  document.querySelector(selector)?.scrollIntoView({ block: 'center', behavior: 'instant' })
+}
+
 const prepareTourTarget = async (selector: string, setup: () => void) => {
   setup()
   await waitForTourTarget(selector)
+  if (selector === DEMO_TASK_SELECTOR || selector === DEMO_TASK_EDIT_SELECTOR) {
+    scrollTourTargetIntoView(selector)
+    await nextTick()
+    await new Promise<void>(resolve => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    })
+    refreshActiveDriver()
+  }
 }
 
 const createDeferredTourHighlightHandler =
   (
     selector: string,
-    skipKey: 'addElementMenu' | 'taskPreview' | 'taskEdit',
+    skipKey: 'addElementMenu' | 'demoTask' | 'demoTaskEdit' | 'taskEdit',
     setup: () => void
   ) =>
   async (element: Element | undefined, _step: DriveStep, { driver: d }: { driver: Driver }) => {
     const skipFlags = {
       addElementMenu: () => skipAddElementMenuStepSetup,
-      taskPreview: () => skipTaskPreviewStepSetup,
+      demoTask: () => skipDemoTaskStepSetup,
+      demoTaskEdit: () => skipDemoTaskEditStepSetup,
       taskEdit: () => skipTaskEditStepSetup,
     }
     const setSkipFlags = {
       addElementMenu: (value: boolean) => {
         skipAddElementMenuStepSetup = value
       },
-      taskPreview: (value: boolean) => {
-        skipTaskPreviewStepSetup = value
+      demoTask: (value: boolean) => {
+        skipDemoTaskStepSetup = value
+      },
+      demoTaskEdit: (value: boolean) => {
+        skipDemoTaskEditStepSetup = value
       },
       taskEdit: (value: boolean) => {
         skipTaskEditStepSetup = value
@@ -216,7 +234,11 @@ export const useProductTour = () => {
   const markProductTourCompleted = () => persistProductTourStatus('completed')
   const markProductTourSkipped = () => persistProductTourStatus('skipped')
 
-  const resolveDemoTaskId = () => getTourDemoPrimaryTaskId()
+  const resolveDemoTaskId = (): string | null => {
+    const primary = getTourDemoPrimaryTaskId()
+    if (primary) return primary
+    return document.querySelector(DEMO_TASK_SELECTOR)?.getAttribute('data-task-id') ?? null
+  }
 
   const buildSteps = (): DriveStep[] => [
     {
@@ -296,47 +318,34 @@ export const useProductTour = () => {
       },
     },
     {
-      element: '[data-tour="demo-task"]',
-      onHighlightStarted: () => {
+      element: DEMO_TASK_SELECTOR,
+      onHighlightStarted: createDeferredTourHighlightHandler(DEMO_TASK_SELECTOR, 'demoTask', () => {
         presentation.closeModals()
-      },
+        const taskId = resolveDemoTaskId()
+        if (taskId) presentation.expandTask(taskId)
+      }),
       popover: {
         title: t('productTour.steps.demoTask.title'),
         description: t('productTour.steps.demoTask.description'),
         side: 'bottom',
         align: 'center',
-        onNextClick: (_element, _step, { driver: d }) => {
-          const taskId = resolveDemoTaskId()
-          if (!taskId) {
-            d.moveNext()
-            return
-          }
-          void prepareTourTarget(TASK_PREVIEW_MODAL_SELECTOR, () =>
-            presentation.openPreview(taskId)
-          ).then(() => d.moveNext())
-        },
       },
     },
     {
-      element: TASK_PREVIEW_MODAL_SELECTOR,
-      disableActiveInteraction: false,
+      element: DEMO_TASK_EDIT_SELECTOR,
       onHighlightStarted: createDeferredTourHighlightHandler(
-        TASK_PREVIEW_MODAL_SELECTOR,
-        'taskPreview',
+        DEMO_TASK_EDIT_SELECTOR,
+        'demoTaskEdit',
         () => {
+          presentation.closeModals()
           const taskId = resolveDemoTaskId()
-          if (taskId) presentation.openPreview(taskId)
+          if (taskId) presentation.expandTask(taskId)
         }
       ),
-      onDeselected: () => {
-        if (!presentation.editTaskId.value) {
-          presentation.closeModals()
-        }
-      },
       popover: {
-        title: t('productTour.steps.taskPreview.title'),
-        description: t('productTour.steps.taskPreview.description'),
-        side: 'bottom',
+        title: t('productTour.steps.demoTaskEdit.title'),
+        description: t('productTour.steps.demoTaskEdit.description'),
+        side: 'left',
         align: 'center',
         onNextClick: (_element, _step, { driver: d }) => {
           const taskId = resolveDemoTaskId()
@@ -402,7 +411,8 @@ export const useProductTour = () => {
       tourPersisted = false
       tourEngaged = false
       skipAddElementMenuStepSetup = false
-      skipTaskPreviewStepSetup = false
+      skipDemoTaskStepSetup = false
+      skipDemoTaskEditStepSetup = false
       skipTaskEditStepSetup = false
       presentation.setActive(false)
       presentation.reset()

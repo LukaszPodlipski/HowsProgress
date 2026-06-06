@@ -5,7 +5,6 @@ import { useWindowSize } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import TaskItem from './TaskItem.vue'
 import TaskEditModal from './TaskEditModal.vue'
-import TaskPreviewModal from './TaskPreviewModal.vue'
 import TasksEmptyState from './TasksEmptyState.vue'
 import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
@@ -14,8 +13,6 @@ import { useI18n } from 'vue-i18n'
 const { tasks, removeTask, restoreTask, updateTask, reorderTasksOrdered } = useTasks()
 const { t } = useI18n()
 const presentation = useProductTourPresentation()
-
-const tourDemoPrimaryTaskId = computed(() => getTourDemoPrimaryTaskId())
 
 const emit = defineEmits<{
   (e: 'select-suggestion', title: string): void
@@ -51,21 +48,9 @@ const handleModalOpenChange = (open: boolean) => {
 }
 
 watch(
-  () => presentation.previewTaskId.value,
-  taskId => {
-    if (taskId) {
-      handlePreviewTask(taskId)
-    } else if (!presentation.editTaskId.value) {
-      isPreviewModalOpen.value = false
-    }
-  }
-)
-
-watch(
   () => presentation.editTaskId.value,
   taskId => {
     if (taskId) {
-      isPreviewModalOpen.value = false
       handleEditTask(taskId)
     } else {
       isEditModalOpen.value = false
@@ -77,45 +62,6 @@ const handleSaveTask = (form: TaskForm) => {
   if (editingTask.value) {
     updateTask(editingTask.value.id, form)
   }
-}
-
-/* ------------------------- PREVIEW MODAL ----------------------------------- */
-const previewTask = ref<Task | null>(null)
-const isPreviewModalOpen = ref(false)
-
-const previewSourceEl = ref<HTMLElement | null>(null)
-const previewSourceWidth = computed(() => {
-  if (!previewSourceEl.value) return undefined
-  return Math.min(previewSourceEl.value.getBoundingClientRect().width, windowWidth.value - 16)
-})
-
-const handlePreviewTask = (taskId: string) => {
-  previewTask.value = tasks.value.find(t => t.id === taskId) ?? null
-  previewSourceEl.value = taskRefs.value.get(taskId) ?? null
-  isPreviewModalOpen.value = true
-}
-
-const handlePreviewModalOpenChange = (open: boolean) => {
-  if (!open && presentation.isActive.value && presentation.previewTaskId.value) {
-    return
-  }
-  isPreviewModalOpen.value = open
-  if (!open) {
-    setTimeout(() => {
-      previewTask.value = null
-      previewSourceEl.value = null
-    }, 250)
-  }
-}
-
-const handlePreviewEdit = (taskId: string) => {
-  handlePreviewModalOpenChange(false)
-  handleEditTask(taskId)
-}
-
-const handlePreviewRemove = (taskId: string) => {
-  handlePreviewModalOpenChange(false)
-  handleRemoveTask(taskId)
 }
 
 /* ------------------------- DATE SEPARATORS ----------------------------------- */
@@ -184,6 +130,13 @@ const sortedTasks = computed(() => {
 })
 
 const isEmpty = computed(() => sortedTasks.value.length === 0)
+
+const tourHighlightTaskId = computed(
+  () => getTourDemoPrimaryTaskId() ?? sortedTasks.value[0]?.id ?? null
+)
+
+const isTourHighlightTask = (taskId: string) =>
+  presentation.isActive.value && taskId === tourHighlightTaskId.value
 
 const dateSeparators = computed(() => {
   const now = new Date()
@@ -626,10 +579,9 @@ defineExpose({ scrollToBottom })
             <li
               :ref="el => setTaskRef(el as HTMLElement, task.id)"
               class="scroll-list__item js-scroll-list-item relative"
-              :data-tour="task.id === tourDemoPrimaryTaskId ? 'demo-task' : undefined"
               :class="{
                 'item-focus': index === focusIndex,
-                'item-visible': visibleTaskIds.has(task.id),
+                'item-visible': visibleTaskIds.has(task.id) || isTourHighlightTask(task.id),
                 'scroll-list__item--source': draggedTaskId === task.id,
               }"
               @dragover.prevent="handleDragOver(task.id, $event)"
@@ -638,12 +590,19 @@ defineExpose({ scrollToBottom })
               <TaskItem
                 :task="task"
                 :dragging="draggedTaskId === task.id"
+                :tour-id="task.id === tourHighlightTaskId ? 'demo-task' : undefined"
+                :expanded="
+                  presentation.isActive.value && presentation.expandedTaskId.value === task.id
+                "
+                :edit-button-tour="task.id === tourHighlightTaskId ? 'demo-task-edit' : undefined"
                 :show-actions="
-                  visibleTaskIds.has(task.id) || index === focusIndex || draggedTaskId === task.id
+                  visibleTaskIds.has(task.id) ||
+                  index === focusIndex ||
+                  draggedTaskId === task.id ||
+                  isTourHighlightTask(task.id)
                 "
                 @remove="handleRemoveTask"
                 @edit="handleEditTask"
-                @preview="handlePreviewTask"
                 @drag-start="handleDragStart"
                 @drag-end="handleDragEnd"
               />
@@ -673,15 +632,5 @@ defineExpose({ scrollToBottom })
     :source-width="editSourceWidth"
     @update:open="handleModalOpenChange"
     @save="handleSaveTask"
-  />
-  <TaskPreviewModal
-    v-if="previewTask"
-    :key="previewTask.id"
-    :task="previewTask"
-    :open="isPreviewModalOpen"
-    :source-width="previewSourceWidth"
-    @update:open="handlePreviewModalOpenChange"
-    @edit="handlePreviewEdit"
-    @remove="handlePreviewRemove"
   />
 </template>

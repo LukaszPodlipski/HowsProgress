@@ -127,7 +127,7 @@ export const useTourDemoData = () => {
     for (let i = 0; i < seeds.length; i += 1) {
       const seed = seeds[i]!
       const taskId = await writeDemoTask(wsId, seed, i)
-      if (seed.description || seed.jiraUrl) {
+      if (i === 0) {
         tourDemoPrimaryTaskId = taskId
       }
     }
@@ -144,6 +144,7 @@ export const useTourDemoData = () => {
           status: TaskStatus.IN_PROGRESS,
           displayDate: today,
           gitUrl: 'https://github.com/example/app/pull/42',
+          description: t('productTour.demo.tasks.bugfixDescription'),
         },
         {
           title: t('productTour.demo.tasks.standup'),
@@ -154,7 +155,6 @@ export const useTourDemoData = () => {
           title: t('productTour.demo.tasks.bugfix'),
           status: TaskStatus.COMPLETED,
           displayDate: yesterday,
-          description: t('productTour.demo.tasks.bugfixDescription'),
           jiraUrl: 'https://example.atlassian.net/browse APP-128',
         },
       ],
@@ -179,8 +179,8 @@ export const useTourDemoData = () => {
         await fetchTasks()
         if (!tourDemoPrimaryTaskId) {
           const { tasks } = useTasks()
-          const featured = tasks.value.find(t => t.jiraUrl || t.description)
-          if (featured) tourDemoPrimaryTaskId = featured.id
+          const first = [...tasks.value].sort((a, b) => a.order - b.order)[0]
+          if (first) tourDemoPrimaryTaskId = first.id
         }
       }
       return true
