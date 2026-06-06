@@ -18,6 +18,7 @@ import { PlusIcon } from 'lucide-vue-next'
 import { Textarea } from '@/components/ui/textarea'
 import TaskInputUrlRow from './TaskInputUrlRow.vue'
 import type { useTaskForm } from '@/composables/useTaskForm'
+import { shortcutKbdClass } from '@/lib/shortcut-kbd'
 import { useEventListener, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
@@ -29,9 +30,6 @@ const props = withDefaults(
   }>(),
   { showAddElementShortcuts: false }
 )
-
-const shortcutKbdClass =
-  'pointer-events-none inline-flex h-5 min-w-5 select-none items-center justify-center rounded border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground'
 
 const emit = defineEmits<{
   contentKeydown: [event: KeyboardEvent]
@@ -107,16 +105,21 @@ const {
 } = props.form
 
 const TITLE_DESCRIPTION_HINT_MIN_LENGTH = 30
+const TITLE_DESCRIPTION_HINT_MAX_LENGTH = 70
 
 const isAddElementMenuExhausted = computed(() => visibleAddElementOptions.value.length === 0)
 
-const showDescriptionShortcutHint = computed(
-  () =>
-    props.showAddElementShortcuts &&
-    isDesktop.value &&
-    !hasDescriptionElement.value &&
-    (title.value?.trim().length ?? 0) > TITLE_DESCRIPTION_HINT_MIN_LENGTH
-)
+const titleLength = computed(() => title.value?.trim().length ?? 0)
+
+const showDescriptionShortcutHint = computed(() => {
+  if (!props.showAddElementShortcuts || !isDesktop.value || hasDescriptionElement.value) {
+    return false
+  }
+  return (
+    titleLength.value >= TITLE_DESCRIPTION_HINT_MIN_LENGTH &&
+    titleLength.value <= TITLE_DESCRIPTION_HINT_MAX_LENGTH
+  )
+})
 
 const canUseAddElementShortcuts = computed(
   () => !isAddElementMenuExhausted.value && (addElementMenuOpen.value || isTaskContentFocused.value)
@@ -152,41 +155,44 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     @submit.prevent="handleSubmit"
   >
     <InputGroup :class="{ 'flex-1 min-h-0': fillHeight }">
-      <InputGroupTextarea
-        v-model="title"
-        v-bind="titleAttrs"
-        :placeholder="t('task.titlePlaceholder')"
-        class="pb-2! pr-10"
-        :rows="1"
-        :maxlength="100"
-        :class="{
-          'aria-invalid': errors.title,
-          'min-h-7': hasExtendedContent,
-          'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
-          'flex-none': fillHeight,
-        }"
-      />
-
-      <Transition
-        enter-active-class="transition-opacity duration-150 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition-opacity duration-100 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <p
-          v-if="showDescriptionShortcutHint"
-          class="flex w-full items-center gap-1.5 px-3 pb-2 text-xs text-muted-foreground"
+      <div class="relative w-full">
+        <InputGroupTextarea
+          v-model="title"
+          v-bind="titleAttrs"
+          :placeholder="t('task.titlePlaceholder')"
+          class="pb-2!"
+          :rows="1"
+          :maxlength="100"
+          :class="{
+            'aria-invalid': errors.title,
+            'min-h-7': hasExtendedContent,
+            'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
+            'flex-none': fillHeight,
+            'pr-10': !showDescriptionShortcutHint,
+            'pr-36': showDescriptionShortcutHint,
+          }"
+        />
+        <Transition
+          enter-active-class="transition-opacity duration-150 ease-out"
+          enter-from-class="opacity-0"
+          enter-to-class="opacity-100"
+          leave-active-class="transition-opacity duration-100 ease-in"
+          leave-from-class="opacity-100"
+          leave-to-class="opacity-0"
         >
-          <span class="flex shrink-0 items-center gap-0.5" aria-hidden="true">
-            <kbd :class="shortcutKbdClass">Alt</kbd>
-            <span class="text-[10px]">+</span>
-            <kbd :class="shortcutKbdClass">O</kbd>
+          <span
+            v-if="showDescriptionShortcutHint"
+            class="pointer-events-none absolute top-3 right-2 flex items-center gap-1 text-xs text-muted-foreground"
+          >
+            <span class="flex items-center gap-0.5" aria-hidden="true">
+              <kbd :class="shortcutKbdClass">Alt</kbd>
+              <span class="text-[10px]">+</span>
+              <kbd :class="shortcutKbdClass">O</kbd>
+            </span>
+            <span>{{ t('task.addDescriptionShortcutHint') }}</span>
           </span>
-          <span>{{ t('task.addDescriptionShortcutHint') }}</span>
-        </p>
-      </Transition>
+        </Transition>
+      </div>
 
       <div
         v-if="hasDescriptionElement"
