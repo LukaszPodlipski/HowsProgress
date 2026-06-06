@@ -11,7 +11,7 @@ import type { TaskForm } from '@/composables/useTaskForm'
 import type { Task } from '@/types'
 import { useI18n } from 'vue-i18n'
 
-const { tasks, removeTask, restoreTask, updateTask, reorderTask } = useTasks()
+const { tasks, removeTask, restoreTask, updateTask, reorderTasksOrdered } = useTasks()
 const { t } = useI18n()
 const presentation = useProductTourPresentation()
 
@@ -202,10 +202,36 @@ const dateSeparators = computed(() => {
 })
 
 /* ------------------------- DRAG AND DROP ----------------------------------- */
-let canDrag = false
 const draggedTaskId = ref<string | null>(null)
-const dragOverTaskId = ref<string | null>(null)
-const dragOverPosition = ref<'before' | 'after'>('after')
+const dropInsertIndex = ref<number | null>(null)
+const dropIndicatorIndex = ref<number | null>(null)
+
+const getDropIndicatorIndex = (insertIndex: number, fromIndex: number): number => {
+  // Source item still occupies its slot in the DOM while dragging
+  if (fromIndex < insertIndex) return insertIndex + 1
+  return insertIndex
+}
+
+const getDropTargetIndex = (overTaskId: string, clientY: number): number | null => {
+  if (!draggedTaskId.value || overTaskId === draggedTaskId.value) return null
+
+  const sorted = sortedTasks.value
+  const fromSortedIndex = sorted.findIndex(t => t.id === draggedTaskId.value)
+  const overSortedIndex = sorted.findIndex(t => t.id === overTaskId)
+  if (fromSortedIndex === -1 || overSortedIndex === -1) return null
+
+  const el = taskRefs.value.get(overTaskId)
+  if (!el) return null
+
+  const rect = el.getBoundingClientRect()
+  const insertAfter = clientY >= rect.top + rect.height / 2
+  let toSortedIndex = insertAfter ? overSortedIndex + 1 : overSortedIndex
+  if (fromSortedIndex < toSortedIndex) toSortedIndex -= 1
+
+  if (fromSortedIndex === toSortedIndex) return null
+
+  return toSortedIndex
+}
 
 // Auto-scroll
 let autoScrollRaf: number | null = null
@@ -250,58 +276,67 @@ const stopAutoScroll = () => {
   autoScrollSpeed = 0
 }
 
-const handleHandlePointerdown = () => {
-  canDrag = true
-}
-
 const handleDragStart = (taskId: string, event: DragEvent) => {
-  if (!canDrag) {
-    event.preventDefault()
-    return
-  }
-  draggedTaskId.value = taskId
+  const li = taskRefs.value.get(taskId)
   if (event.dataTransfer) {
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('text/plain', taskId)
+    if (li) {
+      event.dataTransfer.setDragImage(li, li.clientWidth / 2, 24)
+    }
   }
+  // Defer reactive updates so drag is not cancelled by layout/DOM changes in dragstart
+  requestAnimationFrame(() => {
+    draggedTaskId.value = taskId
+  })
 }
 
 const handleDragOver = (taskId: string, event: DragEvent) => {
   updateAutoScroll(event)
-  if (!draggedTaskId.value || taskId === draggedTaskId.value) return
-  const el = taskRefs.value.get(taskId)
-  if (!el) return
-  const rect = el.getBoundingClientRect()
-  dragOverTaskId.value = taskId
-  dragOverPosition.value = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after'
+  const insertIndex = getDropTargetIndex(taskId, event.clientY)
+  if (insertIndex === null || !draggedTaskId.value) {
+    dropInsertIndex.value = null
+    dropIndicatorIndex.value = null
+    return
+  }
+
+  const fromSortedIndex = sortedTasks.value.findIndex(t => t.id === draggedTaskId.value)
+  dropInsertIndex.value = insertIndex
+  dropIndicatorIndex.value = getDropIndicatorIndex(insertIndex, fromSortedIndex)
 }
 
-const handleDrop = (taskId: string) => {
-  if (!draggedTaskId.value || taskId === draggedTaskId.value) return
-  const draggedTask = tasks.value.find(t => t.id === draggedTaskId.value)
-  const targetTask = tasks.value.find(t => t.id === taskId)
-  if (!draggedTask || !targetTask) return
+const handleDrop = () => {
+  const draggedId = draggedTaskId.value
+  const toSortedIndex = dropInsertIndex.value
+  if (!draggedId || toSortedIndex === null) return
 
-  const fromIndex = tasks.value.indexOf(draggedTask)
-  const overIndex = tasks.value.indexOf(targetTask)
-  if (fromIndex === -1 || overIndex === -1) return
+  const sorted = sortedTasks.value
+  const fromSortedIndex = sorted.findIndex(t => t.id === draggedId)
+  if (fromSortedIndex === -1) return
+  if (toSortedIndex === fromSortedIndex) return
 
-  let toIndex = dragOverPosition.value === 'after' ? overIndex + 1 : overIndex
-  if (fromIndex < toIndex) toIndex -= 1
-
+  const draggedTask = sorted[fromSortedIndex]!
+  const anchorTask = sorted[toSortedIndex] ?? sorted[toSortedIndex - 1]
   const now = new Date()
-  const draggedGroup = getGroupKey(draggedTask.displayDate, now)
-  const targetGroup = getGroupKey(targetTask.displayDate, now)
-  const newDisplayDate = draggedGroup !== targetGroup ? targetTask.displayDate : undefined
+  const newDisplayDate =
+    anchorTask &&
+    getGroupKey(draggedTask.displayDate, now) !== getGroupKey(anchorTask.displayDate, now)
+      ? anchorTask.displayDate
+      : undefined
 
-  reorderTask(fromIndex, toIndex, newDisplayDate)
+  const reordered = [...sorted]
+  reordered.splice(fromSortedIndex, 1)
+  reordered.splice(toSortedIndex, 0, draggedTask)
+
+  reorderTasksOrdered(reordered, draggedTask.id, newDisplayDate)
 }
 
 const handleDragEnd = () => {
-  canDrag = false
   draggedTaskId.value = null
-  dragOverTaskId.value = null
+  dropInsertIndex.value = null
+  dropIndicatorIndex.value = null
   stopAutoScroll()
+  scheduleUpdateFocus()
 }
 
 /* ------------------------- REMOVE TASK ----------------------------------- */
@@ -345,6 +380,8 @@ const setsEqual = (a: Set<string>, b: Set<string>) => {
 }
 
 const scheduleUpdateFocus = () => {
+  if (draggedTaskId.value !== null) return
+
   if (focusUpdateRaf !== null) {
     cancelAnimationFrame(focusUpdateRaf)
   }
@@ -402,7 +439,7 @@ const setTaskRef = (el: HTMLElement | null, taskId: string) => {
 
 /* ------------------------- HANDLING FOCUS INDEX AND VISIBLE TASKS ----------------------------------- */
 const updateFocus = () => {
-  if (!listContainer.value) return
+  if (!listContainer.value || draggedTaskId.value !== null) return
 
   const container = listContainer.value
   const top = container.scrollTop
@@ -559,16 +596,24 @@ defineExpose({ scrollToBottom })
       <div
         ref="listContainer"
         class="scroll-list__wrp js-scroll-content js-scroll-list"
-        :class="{ 'scroll-list__wrp--empty': isEmpty }"
+        :class="{
+          'scroll-list__wrp--empty': isEmpty,
+          'scroll-list__wrp--dragging': draggedTaskId !== null,
+        }"
         :style="{ height: scrollListHeigth + 'px' }"
         @scroll.passive="updateFocus"
-        @dragover="updateAutoScroll($event)"
+        @dragover.prevent="updateAutoScroll($event)"
       >
         <div v-if="isEmpty" class="scroll-list__empty">
           <TasksEmptyState @select-suggestion="emit('select-suggestion', $event)" />
         </div>
         <ul v-else class="scroll-list__list">
           <template v-for="(task, index) in sortedTasks" :key="task.id">
+            <li
+              v-if="dropIndicatorIndex === index"
+              class="scroll-list__drop-indicator"
+              aria-hidden="true"
+            />
             <li
               v-if="dateSeparators.has(task.id)"
               class="scroll-list__separator"
@@ -585,28 +630,30 @@ defineExpose({ scrollToBottom })
               :class="{
                 'item-focus': index === focusIndex,
                 'item-visible': visibleTaskIds.has(task.id),
+                'scroll-list__item--source': draggedTaskId === task.id,
               }"
-              draggable="true"
-              @dragstart="handleDragStart(task.id, $event)"
               @dragover.prevent="handleDragOver(task.id, $event)"
-              @drop.prevent="handleDrop(task.id)"
-              @dragend="handleDragEnd"
+              @drop.prevent="handleDrop()"
             >
-              <div
-                v-if="dragOverTaskId === task.id"
-                class="absolute inset-x-0 h-0.5 bg-primary rounded-full z-10"
-                :class="dragOverPosition === 'before' ? 'top-[-8px]' : 'bottom-[-9px]'"
-              />
               <TaskItem
                 :task="task"
                 :dragging="draggedTaskId === task.id"
+                :show-actions="
+                  visibleTaskIds.has(task.id) || index === focusIndex || draggedTaskId === task.id
+                "
                 @remove="handleRemoveTask"
                 @edit="handleEditTask"
                 @preview="handlePreviewTask"
-                @handle-pointerdown="handleHandlePointerdown"
+                @drag-start="handleDragStart"
+                @drag-end="handleDragEnd"
               />
             </li>
           </template>
+          <li
+            v-if="dropIndicatorIndex === sortedTasks.length"
+            class="scroll-list__drop-indicator"
+            aria-hidden="true"
+          />
         </ul>
       </div>
       <div class="scroll-list__fade scroll-list__fade--top" aria-hidden="true"></div>

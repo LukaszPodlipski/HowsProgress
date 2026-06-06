@@ -17,6 +17,7 @@ const SKIP_SYNC_KEY = 'how-is-your-progress-skip-sync'
 
 const tasks = ref<Task[]>([])
 let firestoreUnsubscribe: (() => void) | null = null
+let isReordering = false
 
 /* --------------------------- HELPERS ----------------------------------- */
 
@@ -48,6 +49,8 @@ const setupFirestoreListener = (db: Firestore, uid: string, wsId: string) => {
   const q = query(getTasksCol(db, uid, wsId), orderBy('order', 'asc'))
 
   firestoreUnsubscribe = onSnapshot(q, snapshot => {
+    if (isReordering) return
+
     tasks.value = snapshot.docs.map(d => {
       const data = d.data() as Task
       return {
@@ -207,6 +210,44 @@ export const useTasks = () => {
 
   /* --- reorder --- */
 
+  const reorderTasksOrdered = async (
+    orderedTasks: Task[],
+    movedTaskId: string,
+    newDisplayDate?: string
+  ): Promise<void> => {
+    const wsId = activeWorkspaceId.value!
+
+    const arr = orderedTasks.map((task, index) => ({
+      ...task,
+      order: index,
+      ...(task.id === movedTaskId && newDisplayDate ? { displayDate: newDisplayDate } : {}),
+    }))
+
+    isReordering = true
+    tasks.value = arr
+
+    try {
+      if (isLoggedIn.value && currentUser.value) {
+        const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
+        const batch = writeBatch($firebaseDb as Firestore)
+
+        for (const task of arr) {
+          const update: Record<string, unknown> = { order: task.order }
+          if (task.id === movedTaskId && newDisplayDate) {
+            update.displayDate = newDisplayDate
+          }
+          batch.update(doc(col, task.id), update)
+        }
+
+        await batch.commit()
+      } else {
+        saveToLocalStorage(wsId, arr)
+      }
+    } finally {
+      isReordering = false
+    }
+  }
+
   const reorderTask = async (
     fromIndex: number,
     toIndex: number,
@@ -324,6 +365,7 @@ export const useTasks = () => {
     removeTask,
     restoreTask,
     reorderTask,
+    reorderTasksOrdered,
     teardownFirestore,
     checkSyncNeeded,
     syncLocalTasksToFirestore,

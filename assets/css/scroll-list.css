@@ -93,6 +93,38 @@
   transform: scale(1);
 }
 
+.scroll-list__wrp--dragging .scroll-list__item {
+  opacity: 1;
+  transform: scale(1);
+  transition: none;
+}
+
+.scroll-list__item.scroll-list__item--source {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.scroll-list__drop-indicator {
+  list-style: none;
+  position: relative;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scroll-list__drop-indicator::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -7px;
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--primary);
+}
+
 .scroll-list__separator {
   display: flex;
   align-items: center;

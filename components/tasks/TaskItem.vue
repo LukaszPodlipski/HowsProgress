@@ -16,20 +16,28 @@ const props = withDefaults(
     descriptionAlwaysExpanded?: boolean
     /** When true, task is embedded (e.g. in preview modal): close button instead of drag handle, actions always visible */
     embedded?: boolean
+    /** When true, action buttons (including drag handle) stay visible without hover */
+    showActions?: boolean
   }>(),
   {
     clickable: true,
     dragging: false,
     descriptionAlwaysExpanded: false,
     embedded: false,
+    showActions: false,
     class: '',
   }
 )
 
 const emit = defineEmits<{
   (e: 'remove' | 'edit' | 'preview', taskId: string): void
-  (e: 'close' | 'handle-pointerdown'): void
+  (e: 'close' | 'drag-end'): void
+  (e: 'drag-start', taskId: string, event: DragEvent): void
 }>()
+
+const onDragStart = (event: DragEvent) => {
+  emit('drag-start', props.task.id, event)
+}
 
 const { t } = useI18n()
 
@@ -88,17 +96,25 @@ const hasLinks = computed(
         </ItemTitle>
         <div
           class="flex items-center gap-0.5 transition-opacity"
-          :class="props.embedded ? 'opacity-100' : 'opacity-0 group-hover/item:opacity-100 '"
+          :class="
+            props.embedded || props.showActions
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/item:opacity-100'
+          "
         >
-          <button
+          <div
             v-if="!props.embedded"
-            type="button"
-            class="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-grab active:cursor-grabbing"
+            draggable="true"
+            role="button"
+            tabindex="-1"
+            class="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-grab touch-none select-none active:cursor-grabbing"
             :aria-label="t('task.dragHandleAriaLabel')"
-            @pointerdown.stop="emit('handle-pointerdown')"
+            @dragstart.stop="onDragStart"
+            @dragend.stop="emit('drag-end')"
+            @click.stop
           >
             <Icon icon="lucide:grip-vertical" class="size-3.5" />
-          </button>
+          </div>
           <button
             type="button"
             class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
