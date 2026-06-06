@@ -211,7 +211,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
       <div
         v-if="hasDescriptionElement"
-        class="relative w-full"
+        class="group relative w-full"
         :class="{ 'flex-1 min-h-0': fillHeight }"
       >
         <Textarea
@@ -229,7 +229,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
         />
         <button
           type="button"
-          class="absolute top-1 right-2 z-10 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer w-[24px] h-[24px]"
+          class="absolute top-1 right-2 z-10 flex size-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring group-hover:opacity-100"
           :aria-label="t('task.removeDescriptionAriaLabel')"
           tabindex="0"
           @click="hasDescriptionElement = false"
