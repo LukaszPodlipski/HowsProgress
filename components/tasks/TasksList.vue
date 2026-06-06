@@ -318,8 +318,8 @@ const handleRemoveTask = (taskId: string) => {
       onClick: () => {
         restoreTask(task, index)
         nextTick(() => {
-          updateFocus()
           if (index + 1 === tasks.value.length) scrollToBottom()
+          else scheduleUpdateFocus()
         })
       },
     },
@@ -331,7 +331,30 @@ const taskRefs = ref<Map<string, HTMLElement>>(new Map())
 const listContainer = ref<HTMLElement | null>(null)
 const focusIndex = ref(0)
 const visibleTaskIds = ref<Set<string>>(new Set())
+const pendingVisibleIds = ref<Set<string>>(new Set())
 const didInitialScroll = ref(false)
+
+let focusUpdateRaf: number | null = null
+
+const setsEqual = (a: Set<string>, b: Set<string>) => {
+  if (a.size !== b.size) return false
+  for (const id of a) {
+    if (!b.has(id)) return false
+  }
+  return true
+}
+
+const scheduleUpdateFocus = () => {
+  if (focusUpdateRaf !== null) {
+    cancelAnimationFrame(focusUpdateRaf)
+  }
+  nextTick(() => {
+    focusUpdateRaf = requestAnimationFrame(() => {
+      focusUpdateRaf = null
+      updateFocus()
+    })
+  })
+}
 
 onMounted(() => {
   nextTick(() => {
@@ -339,24 +362,41 @@ onMounted(() => {
       listContainer.value.scrollTop = listContainer.value.scrollHeight
       didInitialScroll.value = true
     }
-    updateFocus()
+    scheduleUpdateFocus()
   })
 })
 
-watch(tasks, () => {
-  nextTick(() => {
-    if (listContainer.value && !didInitialScroll.value) {
-      listContainer.value.scrollTop = listContainer.value.scrollHeight
-      didInitialScroll.value = true
-    }
-    updateFocus()
-  })
-})
+watch(
+  () => tasks.value.length,
+  (newLen, oldLen) => {
+    nextTick(() => {
+      if (!didInitialScroll.value && newLen > 0) {
+        scrollToBottom()
+        didInitialScroll.value = true
+        return
+      }
+
+      if (newLen > (oldLen ?? 0)) {
+        const addedCount = newLen - (oldLen ?? 0)
+        const nextPending = new Set(pendingVisibleIds.value)
+        for (const task of sortedTasks.value.slice(-addedCount)) {
+          nextPending.add(task.id)
+        }
+        pendingVisibleIds.value = nextPending
+        scrollToBottom()
+      } else {
+        scheduleUpdateFocus()
+      }
+    })
+  }
+)
 
 /* ------------------------- TEMPLATE REFS HANDLING ----------------------------------- */
 const setTaskRef = (el: HTMLElement | null, taskId: string) => {
   if (el) {
     taskRefs.value.set(taskId, el)
+  } else {
+    taskRefs.value.delete(taskId)
   }
 }
 
@@ -364,9 +404,27 @@ const setTaskRef = (el: HTMLElement | null, taskId: string) => {
 const updateFocus = () => {
   if (!listContainer.value) return
 
-  const top = listContainer.value.scrollTop
-  const bottom = top + listContainer.value.clientHeight
+  const container = listContainer.value
+  const top = container.scrollTop
+  const bottom = top + container.clientHeight
   const nextVisible = new Set<string>()
+
+  if (container.scrollHeight <= container.clientHeight + 1) {
+    for (const task of sortedTasks.value) {
+      nextVisible.add(task.id)
+    }
+    if (pendingVisibleIds.value.size > 0) {
+      pendingVisibleIds.value = new Set()
+    }
+    if (!setsEqual(nextVisible, visibleTaskIds.value)) {
+      visibleTaskIds.value = nextVisible
+    }
+    const nextFocus = Math.max(sortedTasks.value.length - 1, 0)
+    if (focusIndex.value !== nextFocus) {
+      focusIndex.value = nextFocus
+    }
+    return
+  }
 
   let firstVisibleIndex = 0
   let foundFirstVisible = false
@@ -390,8 +448,32 @@ const updateFocus = () => {
     }
   }
 
-  visibleTaskIds.value = nextVisible
-  focusIndex.value = foundFirstVisible ? firstVisibleIndex : 0
+  for (const id of pendingVisibleIds.value) {
+    nextVisible.add(id)
+  }
+
+  let isNearBottom = false
+  if (sortedTasks.value.length > 0) {
+    const { scrollTop, scrollHeight, clientHeight } = container
+    isNearBottom = scrollHeight - scrollTop - clientHeight < 50
+    if (isNearBottom && pendingVisibleIds.value.size > 0) {
+      pendingVisibleIds.value = new Set()
+    }
+  }
+
+  if (!setsEqual(nextVisible, visibleTaskIds.value)) {
+    visibleTaskIds.value = nextVisible
+  }
+
+  const nextFocus = foundFirstVisible
+    ? firstVisibleIndex
+    : isNearBottom && sortedTasks.value.length > 0
+      ? sortedTasks.value.length - 1
+      : 0
+
+  if (focusIndex.value !== nextFocus) {
+    focusIndex.value = nextFocus
+  }
 }
 
 /* ------------------------- Handling input block height ----------------------------------- */
@@ -413,14 +495,15 @@ onMounted(() => {
 
 onUnmounted(() => {
   resizeObserver?.disconnect()
+  if (focusUpdateRaf !== null) {
+    cancelAnimationFrame(focusUpdateRaf)
+    focusUpdateRaf = null
+  }
 })
 
 watch(
   () => windowHeight.value,
-
-  () => {
-    updateFocus()
-  }
+  () => scheduleUpdateFocus()
 )
 
 /* ------------------------- SCROLLING UTILS ----------------------------------- */
@@ -453,9 +536,18 @@ const scrollListHeigth = computed(() => {
 })
 
 const scrollToBottom = () => {
-  if (listContainer.value) {
+  if (!listContainer.value) return
+
+  const apply = () => {
+    if (!listContainer.value) return
     listContainer.value.scrollTop = listContainer.value.scrollHeight
   }
+
+  apply()
+  requestAnimationFrame(() => {
+    apply()
+    scheduleUpdateFocus()
+  })
 }
 
 defineExpose({ scrollToBottom })
