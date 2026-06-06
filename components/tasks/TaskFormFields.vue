@@ -61,6 +61,7 @@ const onFormKeydown = (event: KeyboardEvent) => {
 
 const presentation = useProductTourPresentation()
 const localAddMenuOpen = ref(false)
+const statusMenuOpen = ref(false)
 
 const addElementMenuOpen = computed({
   get: () =>
@@ -101,6 +102,7 @@ const {
   removeGitElement,
   removeJiraElement,
   removeExternalElement,
+  cycleTaskStatus,
   isSubmitDisabled,
 } = props.form
 
@@ -125,15 +127,28 @@ const canUseAddElementShortcuts = computed(
   () => !isAddElementMenuExhausted.value && (addElementMenuOpen.value || isTaskContentFocused.value)
 )
 
+const canUseStatusShortcut = computed(
+  () =>
+    props.showAddElementShortcuts &&
+    isDesktop.value &&
+    (statusMenuOpen.value || isTaskContentFocused.value)
+)
+
 watch(isAddElementMenuExhausted, exhausted => {
   if (exhausted) addElementMenuOpen.value = false
 })
 
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if (!props.showAddElementShortcuts || !isDesktop.value || !canUseAddElementShortcuts.value) {
+  if (!props.showAddElementShortcuts || !isDesktop.value) return
+  if (!event.altKey || event.ctrlKey || event.metaKey) return
+
+  if (canUseStatusShortcut.value && event.key.toLowerCase() === 'b') {
+    event.preventDefault()
+    cycleTaskStatus()
     return
   }
-  if (!event.altKey || event.ctrlKey || event.metaKey) return
+
+  if (!canUseAddElementShortcuts.value) return
 
   const option = visibleAddElementOptions.value.find(
     item => item.shortcutKey.toLowerCase() === event.key.toLowerCase()
@@ -324,17 +339,37 @@ useEventListener('keydown', (event: KeyboardEvent) => {
           </Tooltip>
         </TooltipProvider>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <InputGroupButton variant="ghost">
-              <Icon
-                :name="selectedTaskStatus!.icon"
-                class="size-4"
-                :class="[selectedTaskStatus!.iconColor]"
-              />
-              <span class="pr-1">{{ selectedTaskStatus!.label }}</span>
-            </InputGroupButton>
-          </DropdownMenuTrigger>
+        <DropdownMenu v-model:open="statusMenuOpen">
+          <div class="flex items-center gap-1.5">
+            <DropdownMenuTrigger as-child>
+              <InputGroupButton variant="ghost">
+                <Icon
+                  :name="selectedTaskStatus!.icon"
+                  class="size-4"
+                  :class="[selectedTaskStatus!.iconColor]"
+                />
+                <span class="pr-1">{{ selectedTaskStatus!.label }}</span>
+              </InputGroupButton>
+            </DropdownMenuTrigger>
+            <Transition
+              enter-active-class="transition-opacity duration-150 ease-out"
+              enter-from-class="opacity-0"
+              enter-to-class="opacity-100"
+              leave-active-class="transition-opacity duration-100 ease-in"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <span
+                v-if="showAddElementShortcuts && isDesktop && statusMenuOpen"
+                class="flex shrink-0 items-center gap-0.5"
+                :aria-label="t('task.cycleStatusShortcutAriaLabel')"
+              >
+                <kbd :class="shortcutKbdClass">Alt</kbd>
+                <span class="text-[10px] text-muted-foreground">+</span>
+                <kbd :class="shortcutKbdClass">B</kbd>
+              </span>
+            </Transition>
+          </div>
           <DropdownMenuContent
             side="top"
             align="start"

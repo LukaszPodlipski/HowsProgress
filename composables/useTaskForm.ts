@@ -201,6 +201,12 @@ export function useTaskForm(
     externalUrl.value = ''
   }
 
+  function cycleTaskStatus() {
+    const currentIndex = TASK_STATUS_OPTIONS.findIndex(opt => opt.value === taskStatus.value)
+    const nextIndex = (currentIndex + 1) % TASK_STATUS_OPTIONS.length
+    taskStatus.value = TASK_STATUS_OPTIONS[nextIndex].value
+  }
+
   return {
     // Form
     handleSubmit: onSubmit,
@@ -238,5 +244,6 @@ export function useTaskForm(
     removeGitElement,
     removeJiraElement,
     removeExternalElement,
+    cycleTaskStatus,
   }
 }
