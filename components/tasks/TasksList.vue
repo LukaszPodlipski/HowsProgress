@@ -595,12 +595,7 @@ defineExpose({ scrollToBottom })
                   presentation.isActive.value && presentation.expandedTaskId.value === task.id
                 "
                 :edit-button-tour="task.id === tourHighlightTaskId ? 'demo-task-edit' : undefined"
-                :show-actions="
-                  visibleTaskIds.has(task.id) ||
-                  index === focusIndex ||
-                  draggedTaskId === task.id ||
-                  isTourHighlightTask(task.id)
-                "
+                :show-actions="isTourHighlightTask(task.id)"
                 @remove="handleRemoveTask"
                 @edit="handleEditTask"
                 @drag-start="handleDragStart"

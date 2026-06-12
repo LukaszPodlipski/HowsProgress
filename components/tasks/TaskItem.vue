@@ -16,7 +16,7 @@ const props = withDefaults(
     descriptionAlwaysExpanded?: boolean
     /** When true, task is embedded (e.g. in preview modal): close button instead of drag handle, actions always visible */
     embedded?: boolean
-    /** When true, action buttons (including drag handle) stay visible without hover */
+    /** When true, edit and remove buttons stay visible without hover (e.g. product tour) */
     showActions?: boolean
     /** When true, description is expanded (e.g. during product tour) */
     expanded?: boolean
@@ -122,14 +122,33 @@ const handleItemClick = () => {
           <Icon :icon="statusIcon.icon" class="size-4 shrink-0" :class="[statusIcon.color]" />
           <span class="min-w-0 wrap-break-word text-balance">{{ task.title }}</span>
         </ItemTitle>
-        <div
-          class="flex items-center gap-0.5 transition-opacity"
-          :class="
-            props.embedded || props.showActions
-              ? 'opacity-100'
-              : 'opacity-0 group-hover/item:opacity-100'
-          "
-        >
+        <div class="flex items-center gap-0.5">
+          <div
+            class="flex items-center gap-0.5 transition-opacity"
+            :class="
+              props.embedded || props.showActions
+                ? 'opacity-100'
+                : 'opacity-0 group-hover/item:opacity-100'
+            "
+          >
+            <button
+              type="button"
+              class="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
+              :aria-label="t('task.removeAriaLabel')"
+              @click.stop="emit('remove', task.id)"
+            >
+              <Icon icon="lucide:trash-2" class="size-3.5" />
+            </button>
+            <button
+              type="button"
+              class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
+              :data-tour="editButtonTour"
+              :aria-label="t('task.editAriaLabel')"
+              @click.stop="emit('edit', task.id)"
+            >
+              <Icon icon="lucide:pencil" class="size-3.5" />
+            </button>
+          </div>
           <div
             v-if="!props.embedded"
             draggable="true"
@@ -143,23 +162,6 @@ const handleItemClick = () => {
           >
             <Icon icon="lucide:grip-vertical" class="size-3.5" />
           </div>
-          <button
-            type="button"
-            class="p-[6px] rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
-            :data-tour="editButtonTour"
-            :aria-label="t('task.editAriaLabel')"
-            @click.stop="emit('edit', task.id)"
-          >
-            <Icon icon="lucide:pencil" class="size-3.5" />
-          </button>
-          <button
-            type="button"
-            class="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 cursor-pointer"
-            :aria-label="t('task.removeAriaLabel')"
-            @click.stop="emit('remove', task.id)"
-          >
-            <Icon icon="lucide:trash-2" class="size-3.5" />
-          </button>
           <button
             v-if="props.embedded"
             type="button"
