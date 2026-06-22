@@ -155,9 +155,65 @@ const dateSeparators = computed(() => {
 })
 
 /* ------------------------- DRAG AND DROP ----------------------------------- */
+type DropPlacement = 'default' | 'before-separator' | 'after-separator'
+
+type DropTarget = {
+  insertIndex: number
+  targetDisplayDate: string
+  placement: DropPlacement
+  indicatorIndex: number
+}
+
 const draggedTaskId = ref<string | null>(null)
-const dropInsertIndex = ref<number | null>(null)
-const dropIndicatorIndex = ref<number | null>(null)
+const dropTarget = ref<DropTarget | null>(null)
+
+const hasSeparatorBefore = (taskIndex: number): boolean => {
+  const task = sortedTasks.value[taskIndex]
+  return task != null && dateSeparators.value.has(task.id)
+}
+
+const sortTasksLikeList = (items: Task[], now: Date): Task[] => {
+  return [...items].sort((a, b) => {
+    const keyA = getGroupSortKey(a.displayDate, now)
+    const keyB = getGroupSortKey(b.displayDate, now)
+    if (keyA !== keyB) return keyA.localeCompare(keyB)
+    return a.order - b.order
+  })
+}
+
+const wouldDropChangeResult = (
+  sorted: Task[],
+  fromIndex: number,
+  target: DropTarget,
+  draggedId: string
+): boolean => {
+  const now = new Date()
+  const draggedTask = sorted[fromIndex]
+  if (!draggedTask) return false
+
+  const newDisplayDate =
+    getGroupKey(draggedTask.displayDate, now) === getGroupKey(target.targetDisplayDate, now)
+      ? draggedTask.displayDate
+      : target.targetDisplayDate
+
+  const reordered = [...sorted]
+  reordered.splice(fromIndex, 1)
+  reordered.splice(target.insertIndex, 0, draggedTask)
+
+  const withOrder = reordered.map((task, index) => ({
+    ...task,
+    order: index,
+    ...(task.id === draggedId ? { displayDate: newDisplayDate } : {}),
+  }))
+
+  const resorted = sortTasksLikeList(withOrder, now)
+  const oldIndex = sorted.findIndex(t => t.id === draggedId)
+  const newIndex = resorted.findIndex(t => t.id === draggedId)
+  const oldGroup = getGroupKey(draggedTask.displayDate, now)
+  const newGroup = getGroupKey(resorted[newIndex]!.displayDate, now)
+
+  return oldIndex !== newIndex || oldGroup !== newGroup
+}
 
 const getDropIndicatorIndex = (insertIndex: number, fromIndex: number): number => {
   // Source item still occupies its slot in the DOM while dragging
@@ -165,25 +221,118 @@ const getDropIndicatorIndex = (insertIndex: number, fromIndex: number): number =
   return insertIndex
 }
 
-const getDropTargetIndex = (overTaskId: string, clientY: number): number | null => {
-  if (!draggedTaskId.value || overTaskId === draggedTaskId.value) return null
+const resolveDropIndicator = (
+  rawInsertIndex: number,
+  adjustedInsertIndex: number,
+  placement: DropPlacement,
+  fromIndex: number
+): number => {
+  if (placement === 'before-separator' || placement === 'after-separator') {
+    return rawInsertIndex
+  }
+  return getDropIndicatorIndex(adjustedInsertIndex, fromIndex)
+}
+
+const resolveDropTargetAtBoundary = (
+  sorted: Task[],
+  rawInsertIndex: number,
+  overSortedIndex: number,
+  insertAfter: boolean,
+  fromSortedIndex: number
+): DropTarget | null => {
+  let insertIndex = rawInsertIndex
+  if (fromSortedIndex < insertIndex) insertIndex -= 1
+
+  let placement: DropPlacement = 'default'
+  let targetDisplayDate: string
+
+  if (rawInsertIndex > 0 && rawInsertIndex <= sorted.length && hasSeparatorBefore(rawInsertIndex)) {
+    if (insertAfter && overSortedIndex === rawInsertIndex - 1) {
+      placement = 'before-separator'
+      targetDisplayDate = sorted[rawInsertIndex - 1]!.displayDate
+    } else if (!insertAfter && overSortedIndex === rawInsertIndex) {
+      placement = 'after-separator'
+      targetDisplayDate = sorted[rawInsertIndex]!.displayDate
+    } else {
+      const anchor = sorted[insertIndex] ?? sorted[insertIndex - 1]
+      if (!anchor) return null
+      targetDisplayDate = anchor.displayDate
+    }
+  } else {
+    const anchor = sorted[insertIndex] ?? sorted[insertIndex - 1]
+    if (!anchor) return null
+    targetDisplayDate = anchor.displayDate
+  }
+
+  const draggedId = draggedTaskId.value
+  if (!draggedId) return null
+
+  const candidate: DropTarget = {
+    insertIndex,
+    targetDisplayDate,
+    placement,
+    indicatorIndex: resolveDropIndicator(rawInsertIndex, insertIndex, placement, fromSortedIndex),
+  }
+
+  if (!wouldDropChangeResult(sorted, fromSortedIndex, candidate, draggedId)) return null
+
+  return candidate
+}
+
+const resolveDropTargetFromPointer = (
+  overSortedIndex: number,
+  clientY: number,
+  element: HTMLElement
+): DropTarget | null => {
+  if (!draggedTaskId.value) return null
 
   const sorted = sortedTasks.value
   const fromSortedIndex = sorted.findIndex(t => t.id === draggedTaskId.value)
-  const overSortedIndex = sorted.findIndex(t => t.id === overTaskId)
   if (fromSortedIndex === -1 || overSortedIndex === -1) return null
+
+  const rect = element.getBoundingClientRect()
+  const insertAfter = clientY >= rect.top + rect.height / 2
+  const rawInsertIndex = insertAfter ? overSortedIndex + 1 : overSortedIndex
+
+  return resolveDropTargetAtBoundary(
+    sorted,
+    rawInsertIndex,
+    overSortedIndex,
+    insertAfter,
+    fromSortedIndex
+  )
+}
+
+const getDropTargetFromTask = (overTaskId: string, clientY: number): DropTarget | null => {
+  if (!draggedTaskId.value || overTaskId === draggedTaskId.value) return null
+
+  const sorted = sortedTasks.value
+  const overSortedIndex = sorted.findIndex(t => t.id === overTaskId)
+  if (overSortedIndex === -1) return null
 
   const el = taskRefs.value.get(overTaskId)
   if (!el) return null
 
+  return resolveDropTargetFromPointer(overSortedIndex, clientY, el)
+}
+
+const getDropTargetFromSeparator = (taskIndex: number, clientY: number, el: HTMLElement) => {
+  if (!draggedTaskId.value) return null
+
+  const sorted = sortedTasks.value
+  const fromSortedIndex = sorted.findIndex(t => t.id === draggedTaskId.value)
+  if (fromSortedIndex === -1 || !hasSeparatorBefore(taskIndex)) return null
+
   const rect = el.getBoundingClientRect()
-  const insertAfter = clientY >= rect.top + rect.height / 2
-  let toSortedIndex = insertAfter ? overSortedIndex + 1 : overSortedIndex
-  if (fromSortedIndex < toSortedIndex) toSortedIndex -= 1
+  const overBottomHalf = clientY >= rect.top + rect.height / 2
 
-  if (fromSortedIndex === toSortedIndex) return null
-
-  return toSortedIndex
+  return resolveDropTargetAtBoundary(
+    sorted,
+    taskIndex,
+    overBottomHalf ? taskIndex : taskIndex - 1,
+    overBottomHalf ? false : true,
+    fromSortedIndex
+  )
 }
 
 // Auto-scroll
@@ -246,48 +395,44 @@ const handleDragStart = (taskId: string, event: DragEvent) => {
 
 const handleDragOver = (taskId: string, event: DragEvent) => {
   updateAutoScroll(event)
-  const insertIndex = getDropTargetIndex(taskId, event.clientY)
-  if (insertIndex === null || !draggedTaskId.value) {
-    dropInsertIndex.value = null
-    dropIndicatorIndex.value = null
-    return
-  }
+  dropTarget.value = getDropTargetFromTask(taskId, event.clientY)
+}
 
-  const fromSortedIndex = sortedTasks.value.findIndex(t => t.id === draggedTaskId.value)
-  dropInsertIndex.value = insertIndex
-  dropIndicatorIndex.value = getDropIndicatorIndex(insertIndex, fromSortedIndex)
+const handleSeparatorDragOver = (taskIndex: number, event: DragEvent) => {
+  updateAutoScroll(event)
+  dropTarget.value = getDropTargetFromSeparator(
+    taskIndex,
+    event.clientY,
+    event.currentTarget as HTMLElement
+  )
 }
 
 const handleDrop = () => {
   const draggedId = draggedTaskId.value
-  const toSortedIndex = dropInsertIndex.value
-  if (!draggedId || toSortedIndex === null) return
+  const target = dropTarget.value
+  if (!draggedId || !target) return
 
   const sorted = sortedTasks.value
   const fromSortedIndex = sorted.findIndex(t => t.id === draggedId)
   if (fromSortedIndex === -1) return
-  if (toSortedIndex === fromSortedIndex) return
 
   const draggedTask = sorted[fromSortedIndex]!
-  const anchorTask = sorted[toSortedIndex] ?? sorted[toSortedIndex - 1]
   const now = new Date()
   const newDisplayDate =
-    anchorTask &&
-    getGroupKey(draggedTask.displayDate, now) !== getGroupKey(anchorTask.displayDate, now)
-      ? anchorTask.displayDate
-      : undefined
+    getGroupKey(draggedTask.displayDate, now) === getGroupKey(target.targetDisplayDate, now)
+      ? undefined
+      : target.targetDisplayDate
 
   const reordered = [...sorted]
   reordered.splice(fromSortedIndex, 1)
-  reordered.splice(toSortedIndex, 0, draggedTask)
+  reordered.splice(target.insertIndex, 0, draggedTask)
 
   reorderTasksOrdered(reordered, draggedTask.id, newDisplayDate)
 }
 
 const handleDragEnd = () => {
   draggedTaskId.value = null
-  dropInsertIndex.value = null
-  dropIndicatorIndex.value = null
+  dropTarget.value = null
   stopAutoScroll()
   scheduleUpdateFocus()
 }
@@ -563,7 +708,9 @@ defineExpose({ scrollToBottom })
         <ul v-else class="scroll-list__list">
           <template v-for="(task, index) in sortedTasks" :key="task.id">
             <li
-              v-if="dropIndicatorIndex === index"
+              v-if="
+                dropTarget?.indicatorIndex === index && dropTarget.placement !== 'after-separator'
+              "
               class="scroll-list__drop-indicator"
               aria-hidden="true"
             />
@@ -571,11 +718,20 @@ defineExpose({ scrollToBottom })
               v-if="dateSeparators.has(task.id)"
               class="scroll-list__separator"
               aria-hidden="true"
+              @dragover.prevent="handleSeparatorDragOver(index, $event)"
+              @drop.prevent="handleDrop()"
             >
               <div class="scroll-list__separator-line" />
               <span class="scroll-list__separator-label">{{ dateSeparators.get(task.id) }}</span>
               <div class="scroll-list__separator-line" />
             </li>
+            <li
+              v-if="
+                dropTarget?.indicatorIndex === index && dropTarget.placement === 'after-separator'
+              "
+              class="scroll-list__drop-indicator"
+              aria-hidden="true"
+            />
             <li
               :ref="el => setTaskRef(el as HTMLElement, task.id)"
               class="scroll-list__item js-scroll-list-item relative"
@@ -604,7 +760,10 @@ defineExpose({ scrollToBottom })
             </li>
           </template>
           <li
-            v-if="dropIndicatorIndex === sortedTasks.length"
+            v-if="
+              dropTarget?.indicatorIndex === sortedTasks.length &&
+              dropTarget.placement !== 'after-separator'
+            "
             class="scroll-list__drop-indicator"
             aria-hidden="true"
           />
