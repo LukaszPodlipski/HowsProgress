@@ -43,8 +43,16 @@ const suggestions = computed(() => [
     </div>
 
     <ul class="w-full flex flex-col gap-2.5 text-left">
-      <li v-for="tip in tips" :key="tip.text" class="flex items-start gap-3 text-sm text-muted-foreground">
-        <Icon :name="tip.icon" class="size-4 shrink-0 mt-0.5 text-foreground/70" aria-hidden="true" />
+      <li
+        v-for="tip in tips"
+        :key="tip.text"
+        class="flex items-start gap-3 text-sm text-muted-foreground"
+      >
+        <Icon
+          :name="tip.icon"
+          class="size-4 shrink-0 mt-0.5 text-foreground/70"
+          aria-hidden="true"
+        />
         <span>{{ tip.text }}</span>
       </li>
     </ul>

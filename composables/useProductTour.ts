@@ -353,9 +353,9 @@ export const useProductTour = () => {
             d.moveNext()
             return
           }
-          void prepareTourTarget(TASK_EDIT_MODAL_SELECTOR, () => presentation.openEdit(taskId)).then(
-            () => d.moveNext()
-          )
+          void prepareTourTarget(TASK_EDIT_MODAL_SELECTOR, () =>
+            presentation.openEdit(taskId)
+          ).then(() => d.moveNext())
         },
       },
     },

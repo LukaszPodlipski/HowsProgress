@@ -57,7 +57,8 @@ const setupFirestoreListener = (db: Firestore, uid: string, wsId: string) => {
         ...data,
         id: d.id,
         displayDate:
-          data.displayDate || (data.createdAt ? toLocalDateString(new Date(data.createdAt)) : toLocalDateString()),
+          data.displayDate ||
+          (data.createdAt ? toLocalDateString(new Date(data.createdAt)) : toLocalDateString()),
       }
     })
   })

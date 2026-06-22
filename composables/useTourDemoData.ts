@@ -72,9 +72,7 @@ export const useTourDemoData = () => {
 
   const countTasksInWorkspace = async (wsId: string): Promise<number> => {
     if (isLoggedIn.value && currentUser.value) {
-      const snap = await getDocs(
-        getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
-      )
+      const snap = await getDocs(getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId))
       return snap.size
     }
 
@@ -96,7 +94,11 @@ export const useTourDemoData = () => {
     return false
   }
 
-  const writeDemoTask = async (wsId: string, seed: DemoTaskSeed, order: number): Promise<string> => {
+  const writeDemoTask = async (
+    wsId: string,
+    seed: DemoTaskSeed,
+    order: number
+  ): Promise<string> => {
     const task: Task = {
       id: crypto.randomUUID(),
       title: seed.title,
