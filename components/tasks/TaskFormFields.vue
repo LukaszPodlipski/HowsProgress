@@ -18,6 +18,7 @@ import { PlusIcon } from 'lucide-vue-next'
 import { Textarea } from '@/components/ui/textarea'
 import TaskInputUrlRow from './TaskInputUrlRow.vue'
 import type { useTaskForm } from '@/composables/useTaskForm'
+import { AddElementType } from '@/types/enums'
 import { shortcutKbdClass } from '@/lib/shortcut-kbd'
 import { useEventListener, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
@@ -98,6 +99,7 @@ const {
   taskStatusOptions,
   selectedTaskStatus,
   visibleAddElementOptions,
+  addElementOptions,
   onAddElement,
   removeGitElement,
   removeJiraElement,
@@ -124,8 +126,16 @@ const showDescriptionShortcutHint = computed(() => {
 })
 
 const canUseAddElementShortcuts = computed(
-  () => !isAddElementMenuExhausted.value && (addElementMenuOpen.value || isTaskContentFocused.value)
+  () => addElementMenuOpen.value || isTaskContentFocused.value
 )
+
+const isAddElementVisible = (type: AddElementType): boolean => {
+  if (type === AddElementType.DESCRIPTION) return hasDescriptionElement.value
+  if (type === AddElementType.GIT) return hasGitElement.value
+  if (type === AddElementType.JIRA) return hasJiraElement.value
+  if (type === AddElementType.EXTERNAL) return hasExternalElement.value
+  return false
+}
 
 const canUseStatusShortcut = computed(
   () =>
@@ -137,6 +147,61 @@ const canUseStatusShortcut = computed(
 watch(isAddElementMenuExhausted, exhausted => {
   if (exhausted) addElementMenuOpen.value = false
 })
+
+const formEl = ref<HTMLFormElement | null>(null)
+
+const focusAddedElement = (type: AddElementType) => {
+  nextTick(() => {
+    const field = formEl.value?.querySelector<HTMLElement>(`[data-add-element-field="${type}"]`)
+    field?.focus()
+  })
+}
+
+const focusTitleField = () => {
+  nextTick(() => {
+    const titleField = formEl.value?.querySelector<HTMLElement>(
+      '[data-task-content-field]:not([data-add-element-field])'
+    )
+    titleField?.focus()
+  })
+}
+
+const isAddElementFieldFocused = (type: AddElementType): boolean => {
+  const active = document.activeElement
+  if (!(active instanceof HTMLElement) || !formEl.value?.contains(active)) return false
+  const field = active.closest(`[data-add-element-field="${type}"]`)
+  return field instanceof HTMLElement && formEl.value.contains(field)
+}
+
+const removeAddElement = (type: AddElementType) => {
+  if (type === AddElementType.DESCRIPTION) hasDescriptionElement.value = false
+  else if (type === AddElementType.GIT) removeGitElement()
+  else if (type === AddElementType.JIRA) removeJiraElement()
+  else if (type === AddElementType.EXTERNAL) removeExternalElement()
+}
+
+const handleAddElement = (type: AddElementType) => {
+  if (isAddElementVisible(type)) {
+    addElementMenuOpen.value = false
+    focusAddedElement(type)
+    return
+  }
+  onAddElement(type)
+  addElementMenuOpen.value = false
+  focusAddedElement(type)
+}
+
+const handleAddElementShortcut = (type: AddElementType) => {
+  addElementMenuOpen.value = false
+
+  if (isAddElementVisible(type) && isAddElementFieldFocused(type)) {
+    removeAddElement(type)
+    focusTitleField()
+    return
+  }
+
+  handleAddElement(type)
+}
 
 useEventListener('keydown', (event: KeyboardEvent) => {
   if (!props.showAddElementShortcuts || !isDesktop.value) return
@@ -150,19 +215,19 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   if (!canUseAddElementShortcuts.value) return
 
-  const option = visibleAddElementOptions.value.find(
+  const option = addElementOptions.find(
     item => item.shortcutKey.toLowerCase() === event.key.toLowerCase()
   )
   if (!option) return
 
   event.preventDefault()
-  onAddElement(option.type)
-  addElementMenuOpen.value = false
+  handleAddElementShortcut(option.type)
 })
 </script>
 
 <template>
   <form
+    ref="formEl"
     :class="{ 'flex flex-col flex-1 min-h-0': fillHeight }"
     @focusin="onTaskContentFocusIn"
     @focusout="onTaskContentFocusOut"
@@ -220,6 +285,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
           :placeholder="t('task.descriptionPlaceholder')"
           data-slot="input-group-control"
           data-task-content-field
+          :data-add-element-field="AddElementType.DESCRIPTION"
           :maxlength="1000"
           class="min-h-20 w-full pr-10 resize-none rounded-none border-0 bg-transparent py-2 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent transition-colors focus-visible:bg-accent/50"
           :class="{
@@ -241,6 +307,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       <TaskInputUrlRow
         v-if="hasGitElement"
         icon="lucide:git-branch"
+        :add-element-field="AddElementType.GIT"
         :placeholder="t('task.gitUrlPlaceholder')"
         :model-value="gitUrl ?? ''"
         :invalid="!!errors.gitUrl"
@@ -253,6 +320,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       <TaskInputUrlRow
         v-if="hasJiraElement"
         icon="simple-icons:jira"
+        :add-element-field="AddElementType.JIRA"
         :placeholder="t('task.jiraUrlPlaceholder')"
         :model-value="jiraUrl ?? ''"
         :invalid="!!errors.jiraUrl"
@@ -265,6 +333,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
       <TaskInputUrlRow
         v-if="hasExternalElement"
         icon="lucide:external-link"
+        :add-element-field="AddElementType.EXTERNAL"
         :placeholder="t('task.externalUrlPlaceholder')"
         :model-value="externalUrl ?? ''"
         :invalid="!!errors.externalUrl"
@@ -299,7 +368,7 @@ useEventListener('keydown', (event: KeyboardEvent) => {
               v-for="option in visibleAddElementOptions"
               :key="option.type"
               class="group w-full justify-between"
-              @click="onAddElement(option.type)"
+              @click="handleAddElement(option.type)"
             >
               <span class="flex min-w-0 items-center gap-2">
                 <Icon :name="option.icon" class="size-4 shrink-0" />

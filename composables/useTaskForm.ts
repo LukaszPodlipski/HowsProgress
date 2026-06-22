@@ -238,6 +238,7 @@ export function useTaskForm(
     taskStatusOptions: TASK_STATUS_OPTIONS,
     selectedTaskStatus,
     visibleAddElementOptions,
+    addElementOptions: ADD_ELEMENT_OPTIONS,
 
     // Actions
     onAddElement,

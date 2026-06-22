@@ -8,6 +8,7 @@ defineProps<{
   modelValue: string
   invalid?: boolean
   removeAriaLabel: string
+  addElementField?: string
   inputAttrs?: HTMLAttributes & Record<string, unknown>
 }>()
 
@@ -33,6 +34,7 @@ const emit = defineEmits<{
       :placeholder="placeholder"
       data-slot="input-group-control"
       data-task-content-field
+      :data-add-element-field="addElementField"
       class="min-h-9 flex-1 rounded-none border-0 bg-transparent py-2 pr-8 shadow-none focus-visible:ring-0 focus-visible:ring-transparent ring-offset-transparent dark:bg-transparent"
       :class="{ 'aria-invalid text-destructive': invalid }"
       @update:model-value="emit('update:modelValue', String($event ?? ''))"
