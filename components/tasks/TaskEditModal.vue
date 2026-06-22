@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { CheckIcon } from 'lucide-vue-next'
-import { InputGroupButton } from '@/components/ui/input-group'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import TaskFormFields from './TaskFormFields.vue'
-import { useTaskForm, type TaskForm } from '@/composables/useTaskForm'
+import TaskInput, { type TaskForm } from './TaskInput.vue'
 import type { Task } from '@/types'
 import { useI18n } from 'vue-i18n'
 
@@ -21,20 +18,19 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const form = useTaskForm(
-  f => {
-    emit('save', f)
-    emit('update:open', false)
-  },
-  {
-    title: props.task.title,
-    description: props.task.description ?? '',
-    taskStatus: props.task.status,
-    gitUrl: props.task.gitUrl ?? '',
-    jiraUrl: props.task.jiraUrl ?? '',
-    externalUrl: props.task.externalUrl ?? '',
-  }
-)
+const taskInitial = computed<Partial<TaskForm>>(() => ({
+  title: props.task.title,
+  description: props.task.description ?? '',
+  taskStatus: props.task.status,
+  gitUrl: props.task.gitUrl ?? '',
+  jiraUrl: props.task.jiraUrl ?? '',
+  externalUrl: props.task.externalUrl ?? '',
+}))
+
+const handleSave = (form: TaskForm) => {
+  emit('save', form)
+  emit('update:open', false)
+}
 </script>
 
 <template>
@@ -52,20 +48,13 @@ const form = useTaskForm(
         <DialogTitle>{{ t('task.editModalTitle') }}</DialogTitle>
       </DialogHeader>
       <div class="flex flex-col flex-1 min-h-0 overflow-hidden px-4 pb-4 pt-1">
-        <TaskFormFields :form="form" fill-height>
-          <template #submit="{ isSubmitDisabled }">
-            <InputGroupButton
-              type="submit"
-              variant="default"
-              class="gap-1.5 rounded-full px-3"
-              size="sm"
-              :disabled="isSubmitDisabled"
-            >
-              <CheckIcon class="size-3.5" />
-              {{ t('task.save') }}
-            </InputGroupButton>
-          </template>
-        </TaskFormFields>
+        <TaskInput
+          :key="task.id"
+          :initial="taskInitial"
+          fill-height
+          submit-mode="save"
+          @save="handleSave"
+        />
       </div>
     </DialogContent>
   </Dialog>

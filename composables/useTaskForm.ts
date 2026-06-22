@@ -39,9 +39,11 @@ function normalizeSubmitPayload(values: TaskForm): TaskForm {
 
 export function useTaskForm(
   onSubmitCallback: (form: TaskForm) => void,
-  initial?: Partial<TaskForm>
+  initial?: Partial<TaskForm>,
+  options?: { resetOnSubmit?: boolean }
 ) {
   const { t } = useI18n()
+  const resetOnSubmit = options?.resetOnSubmit ?? true
 
   const urlSchema = z.string().url(t('validation.invalidUrl'))
   const optionalUrlSchema = z.union([z.literal(''), urlSchema]).optional()
@@ -176,7 +178,7 @@ export function useTaskForm(
 
   const onSubmit = handleSubmit(values => {
     onSubmitCallback(normalizeSubmitPayload(values))
-    resetForm()
+    if (resetOnSubmit) resetForm()
   })
 
   function onAddElement(type: AddElementType) {

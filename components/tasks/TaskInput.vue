@@ -9,13 +9,34 @@ import { useI18n } from 'vue-i18n'
 
 export type { TaskForm }
 
+const props = withDefaults(
+  defineProps<{
+    initial?: Partial<TaskForm>
+    fillHeight?: boolean
+    submitMode?: 'send' | 'save'
+  }>(),
+  {
+    initial: undefined,
+    fillHeight: false,
+    submitMode: 'send',
+  }
+)
+
 const emit = defineEmits<{
-  (e: 'submit', taskForm: TaskForm): void
+  (e: 'submit' | 'save', taskForm: TaskForm): void
 }>()
 
 const { t } = useI18n()
-const form = useTaskForm(f => emit('submit', f))
 const isDesktop = useMediaQuery('(min-width: 769px)')
+
+const form = useTaskForm(
+  taskForm => {
+    if (props.submitMode === 'save') emit('save', taskForm)
+    else emit('submit', taskForm)
+  },
+  props.initial,
+  { resetOnSubmit: props.submitMode !== 'save' }
+)
 
 const applySuggestion = (text: string) => {
   form.title.value = text
@@ -25,19 +46,11 @@ const applySuggestion = (text: string) => {
   })
 }
 
-const onContentKeydown = (event: KeyboardEvent) => {
-  if (!isDesktop.value) return
-  if (!event.altKey || event.key.toLowerCase() !== 's') return
-  event.preventDefault()
-  if (form.isSubmitDisabled.value) return
-  form.handleSubmit(event)
-}
-
 defineExpose({ applySuggestion })
 </script>
 
 <template>
-  <TaskFormFields :form="form" show-add-element-shortcuts @content-keydown="onContentKeydown">
+  <TaskFormFields :form="form" :fill-height="fillHeight" show-add-element-shortcuts>
     <template #submit="{ isSubmitDisabled, isTaskContentFocused }">
       <div class="flex items-center gap-2">
         <Transition
@@ -51,7 +64,11 @@ defineExpose({ applySuggestion })
           <span
             v-if="isTaskContentFocused && isDesktop && !isSubmitDisabled"
             class="flex items-center gap-0.5"
-            :aria-label="t('task.submitShortcutAriaLabel')"
+            :aria-label="
+              submitMode === 'save'
+                ? t('task.saveShortcutAriaLabel')
+                : t('task.submitShortcutAriaLabel')
+            "
           >
             <kbd :class="shortcutKbdClass">Alt</kbd>
             <span class="text-[10px] text-muted-foreground">+</span>
@@ -59,6 +76,7 @@ defineExpose({ applySuggestion })
           </span>
         </Transition>
         <InputGroupButton
+          v-if="submitMode === 'send'"
           type="submit"
           variant="default"
           class="rounded-full"
@@ -67,6 +85,16 @@ defineExpose({ applySuggestion })
         >
           <ArrowUpIcon class="size-4" />
           <span class="sr-only">{{ t('task.send') }}</span>
+        </InputGroupButton>
+        <InputGroupButton
+          v-else
+          type="submit"
+          variant="default"
+          class="gap-1.5 rounded-full px-3"
+          size="sm"
+          :disabled="isSubmitDisabled"
+        >
+          {{ t('task.save') }}
         </InputGroupButton>
       </div>
     </template>

@@ -4,6 +4,7 @@
     "descriptionPlaceholder": "Opis (opcjonalnie)...",
     "send": "Wyślij",
     "submitShortcutAriaLabel": "Skrót klawiszowy: Alt plus S, wyślij zadanie",
+    "saveShortcutAriaLabel": "Skrót klawiszowy: Alt plus S, zapisz zadanie",
     "cycleStatusShortcutAriaLabel": "Skrót klawiszowy: Alt plus B, przełącz status zadania",
     "cycleStatusClickAriaLabel": "Zmień status zadania",
     "addDescriptionShortcutHint": "Dodaj opis",

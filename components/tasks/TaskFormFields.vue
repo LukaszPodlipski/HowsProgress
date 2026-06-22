@@ -32,10 +32,6 @@ const props = withDefaults(
   { showAddElementShortcuts: false }
 )
 
-const emit = defineEmits<{
-  contentKeydown: [event: KeyboardEvent]
-}>()
-
 const { t } = useI18n()
 
 const isTaskContentFocused = ref(false)
@@ -53,11 +49,6 @@ const onTaskContentFocusIn = (event: FocusEvent) => {
 const onTaskContentFocusOut = (event: FocusEvent) => {
   if (isTaskContentField(event.relatedTarget)) return
   isTaskContentFocused.value = false
-}
-
-const onFormKeydown = (event: KeyboardEvent) => {
-  if (!isTaskContentField(event.target)) return
-  emit('contentKeydown', event)
 }
 
 const presentation = useProductTourPresentation()
@@ -203,9 +194,25 @@ const handleAddElementShortcut = (type: AddElementType) => {
   handleAddElement(type)
 }
 
-useEventListener('keydown', (event: KeyboardEvent) => {
+const isShortcutTargetInForm = (event: KeyboardEvent): boolean => {
+  const target = event.target
+  if (!(target instanceof Node) || !formEl.value) return false
+  if (formEl.value.contains(target)) return true
+  return addElementMenuOpen.value || statusMenuOpen.value
+}
+
+const handleShortcutKeydown = (event: KeyboardEvent) => {
   if (!props.showAddElementShortcuts || !isDesktop.value) return
   if (!event.altKey || event.ctrlKey || event.metaKey) return
+  if (!isShortcutTargetInForm(event)) return
+
+  if (event.key.toLowerCase() === 's') {
+    if (!isTaskContentField(event.target)) return
+    event.preventDefault()
+    if (isSubmitDisabled.value) return
+    handleSubmit(event)
+    return
+  }
 
   if (canUseStatusShortcut.value && event.key.toLowerCase() === 'b') {
     event.preventDefault()
@@ -222,7 +229,9 @@ useEventListener('keydown', (event: KeyboardEvent) => {
 
   event.preventDefault()
   handleAddElementShortcut(option.type)
-})
+}
+
+useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
 </script>
 
 <template>
@@ -231,7 +240,6 @@ useEventListener('keydown', (event: KeyboardEvent) => {
     :class="{ 'flex flex-col flex-1 min-h-0': fillHeight }"
     @focusin="onTaskContentFocusIn"
     @focusout="onTaskContentFocusOut"
-    @keydown="onFormKeydown"
     @submit.prevent="handleSubmit"
   >
     <InputGroup :class="{ 'flex-1 min-h-0': fillHeight }">
