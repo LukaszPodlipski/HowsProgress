@@ -1,7 +1,7 @@
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
-import { AddElementType, TaskStatus } from '@/types/enums'
+import { AddElementType, TaskStatus, getNextTaskStatus } from '@/types/enums'
 import { useI18n } from 'vue-i18n'
 
 // Strukturalny schemat używany wyłącznie do inferencji typu TaskForm
@@ -202,9 +202,7 @@ export function useTaskForm(
   }
 
   function cycleTaskStatus() {
-    const currentIndex = TASK_STATUS_OPTIONS.findIndex(opt => opt.value === taskStatus.value)
-    const nextIndex = (currentIndex + 1) % TASK_STATUS_OPTIONS.length
-    taskStatus.value = TASK_STATUS_OPTIONS[nextIndex].value
+    taskStatus.value = getNextTaskStatus(taskStatus.value)
   }
 
   return {

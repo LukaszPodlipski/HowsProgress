@@ -5,6 +5,7 @@
     "send": "Wyślij",
     "submitShortcutAriaLabel": "Skrót klawiszowy: Alt plus S, wyślij zadanie",
     "cycleStatusShortcutAriaLabel": "Skrót klawiszowy: Alt plus B, przełącz status zadania",
+    "cycleStatusClickAriaLabel": "Zmień status zadania",
     "addDescriptionShortcutHint": "Dodaj opis",
     "save": "Zapisz",
     "editModalTitle": "Edytuj zadanie",

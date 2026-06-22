@@ -1,5 +1,6 @@
 import type { Task } from '@/types'
 import type { TaskForm } from '@/composables/useTaskForm'
+import { getNextTaskStatus } from '@/types/enums'
 import type { Firestore } from 'firebase/firestore'
 import {
   collection,
@@ -209,6 +210,21 @@ export const useTasks = () => {
     }
   }
 
+  const cycleTaskStatus = async (id: string): Promise<void> => {
+    const index = tasks.value.findIndex(t => t.id === id)
+    if (index === -1) return
+
+    const existing = tasks.value[index]!
+    await updateTask(id, {
+      title: existing.title,
+      description: existing.description ?? '',
+      taskStatus: getNextTaskStatus(existing.status),
+      gitUrl: existing.gitUrl ?? '',
+      jiraUrl: existing.jiraUrl ?? '',
+      externalUrl: existing.externalUrl ?? '',
+    })
+  }
+
   /* --- reorder --- */
 
   const reorderTasksOrdered = async (
@@ -363,6 +379,7 @@ export const useTasks = () => {
     fetchTasks,
     addTask,
     updateTask,
+    cycleTaskStatus,
     removeTask,
     restoreTask,
     reorderTask,

@@ -39,7 +39,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'remove' | 'edit', taskId: string): void
+  (e: 'remove' | 'edit' | 'cycle-status', taskId: string): void
   (e: 'close' | 'drag-end'): void
   (e: 'drag-start', taskId: string, event: DragEvent): void
 }>()
@@ -119,7 +119,14 @@ const handleItemClick = () => {
     <ItemContent>
       <div class="flex items-start justify-between gap-4">
         <ItemTitle class="min-w-0">
-          <Icon :icon="statusIcon.icon" class="size-4 shrink-0" :class="[statusIcon.color]" />
+          <button
+            type="button"
+            class="shrink-0 -m-0.5 rounded-sm p-0.5 transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            :aria-label="t('task.cycleStatusClickAriaLabel')"
+            @click.stop="emit('cycle-status', task.id)"
+          >
+            <Icon :icon="statusIcon.icon" class="size-4" :class="[statusIcon.color]" />
+          </button>
           <span class="min-w-0 wrap-break-word text-balance">{{ task.title }}</span>
         </ItemTitle>
         <div class="flex items-center gap-0.5">

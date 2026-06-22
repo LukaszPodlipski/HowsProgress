@@ -12,7 +12,8 @@ import TaskEditModal from './TaskEditModal.vue'
 import TasksEmptyState from './TasksEmptyState.vue'
 import { useI18n } from 'vue-i18n'
 
-const { tasks, removeTask, restoreTask, updateTask, reorderTasksOrdered } = useTasks()
+const { tasks, removeTask, restoreTask, updateTask, cycleTaskStatus, reorderTasksOrdered } =
+  useTasks()
 const { t } = useI18n()
 const presentation = useProductTourPresentation()
 
@@ -182,6 +183,7 @@ defineExpose({ scrollToBottom })
                 :show-actions="isTourHighlightTask(task.id)"
                 @remove="handleRemoveTask"
                 @edit="handleEditTask"
+                @cycle-status="cycleTaskStatus"
                 @drag-start="handleDragStart"
                 @drag-end="handleDragEnd"
               />
