@@ -1,0 +1,108 @@
+<!doctype html>
+<html {{ HTML_ATTRS }}>
+  <head {{ HEAD_ATTRS }}>
+    {{ HEAD }}
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: grid;
+        place-items: center;
+        background: oklch(0.18 0 0);
+        color: oklch(0.985 0 0);
+        font-family: 'Roboto', sans-serif;
+        transition:
+          opacity 420ms ease,
+          transform 420ms ease;
+      }
+
+      #app-splash.is-hidden {
+        opacity: 0;
+        transform: scale(1.02);
+        pointer-events: none;
+      }
+
+      #app-splash__inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+      }
+
+      #app-splash__logo {
+        width: 4rem;
+        height: 4rem;
+        border-radius: 1rem;
+        animation: app-splash-pulse 2.4s ease-in-out infinite;
+      }
+
+      #app-splash__title {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      #app-splash__bar {
+        width: 8rem;
+        height: 3px;
+        overflow: hidden;
+        border-radius: 9999px;
+        background: oklch(1 0 0 / 8%);
+      }
+
+      #app-splash__bar-fill {
+        width: 40%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, oklch(0.488 0.243 264.376), oklch(0.623 0.214 259.815));
+        animation: app-splash-shimmer 1.2s ease-in-out infinite;
+      }
+
+      @keyframes app-splash-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.04);
+        }
+      }
+
+      @keyframes app-splash-shimmer {
+        0% {
+          transform: translateX(-120%);
+        }
+
+        100% {
+          transform: translateX(320%);
+        }
+      }
+    </style>
+  </head>
+  <body {{ BODY_ATTRS }}>
+    <div id="app-splash" aria-hidden="true">
+      <div id="app-splash__inner">
+        <img id="app-splash__logo" src="/logo.png" alt="" width="64" height="64" />
+        <p id="app-splash__title">How's Progress?</p>
+        <div id="app-splash__bar" aria-hidden="true">
+          <div id="app-splash__bar-fill"></div>
+        </div>
+      </div>
+    </div>
+    {{ APP }}
+    <script>
+      window.__removeAppSplash = function () {
+        var splash = document.getElementById('app-splash')
+        if (!splash || splash.dataset.removed === 'true') return
+        splash.dataset.removed = 'true'
+        splash.classList.add('is-hidden')
+        window.setTimeout(function () {
+          splash.remove()
+        }, 460)
+      }
+    </script>
+  </body>
+</html>

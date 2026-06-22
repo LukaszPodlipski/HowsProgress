@@ -27,3 +27,11 @@ export interface UserProfile {
   productTourStatus?: ProductTourStatus
   productTourAt?: string
 }
+
+declare global {
+  interface Window {
+    __removeAppSplash?: () => void
+  }
+}
+
+export {}

@@ -4,10 +4,11 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import type { Firestore } from 'firebase/firestore'
 import type { Task } from '@/types'
 
-const { currentUser, isLoggedIn, isLocalMode, initAuth } = useAuth()
+const { currentUser, isLoggedIn, isLocalMode } = useAuth()
 const { fetchTasks, teardownFirestore, checkSyncNeeded, syncLocalTasksToFirestore, dismissSync } =
   useTasks()
 const { initWorkspaces, teardownWorkspaces, activeWorkspaceId } = useWorkspaces()
+const { isReady, showLoader, isExiting, phase } = useAppBootstrap()
 
 const showSyncDialog = ref(false)
 const pendingSyncTasks = ref<Task[]>([])
@@ -17,21 +18,7 @@ const route = useRoute()
 const ROUTES_WITHOUT_SIDEBAR = ['/login']
 const isFullscreenRoute = computed(() => ROUTES_WITHOUT_SIDEBAR.includes(route.path))
 
-await initAuth()
-
-if (!isLoggedIn.value && !isLocalMode.value) {
-  await navigateTo('/login')
-}
-
 const { $firebaseDb } = useNuxtApp()
-
-if (isLoggedIn.value && currentUser.value) {
-  await initWorkspaces($firebaseDb as Firestore, currentUser.value.uid)
-  fetchTasks()
-} else if (isLocalMode.value) {
-  await initWorkspaces()
-  fetchTasks()
-}
 
 const readLocalWorkspaceTasks = (): Task[] => {
   const wsId = activeWorkspaceId.value
@@ -88,28 +75,32 @@ watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
 </script>
 
 <template>
-  <template v-if="isFullscreenRoute">
-    <NuxtPage class="w-full" />
-  </template>
+  <AppLoader v-if="showLoader" :phase="phase" :exiting="isExiting" />
 
-  <template v-else>
-    <SidebarProvider>
-      <AppSidebar />
-      <AppProductTour :blocked="showSyncDialog" />
-      <SidebarInset>
-        <header class="flex h-12 shrink-0 items-center gap-2 px-4 border-b border-border/50">
-          <SidebarTrigger class="-ml-1" />
-        </header>
-        <NuxtPage class="w-full" />
-      </SidebarInset>
-    </SidebarProvider>
-  </template>
+  <template v-if="isReady">
+    <template v-if="isFullscreenRoute">
+      <NuxtPage class="w-full" />
+    </template>
 
-  <Toaster position="top-center" theme="dark" />
-  <SyncDialog
-    :open="showSyncDialog"
-    :task-count="pendingSyncTasks.length"
-    @sync="handleSync"
-    @dismiss="handleDismissSync"
-  />
+    <template v-else>
+      <SidebarProvider>
+        <AppSidebar />
+        <AppProductTour :blocked="showSyncDialog" />
+        <SidebarInset>
+          <header class="flex h-12 shrink-0 items-center gap-2 px-4 border-b border-border/50">
+            <SidebarTrigger class="-ml-1" />
+          </header>
+          <NuxtPage class="w-full" />
+        </SidebarInset>
+      </SidebarProvider>
+    </template>
+
+    <Toaster position="top-center" theme="dark" />
+    <SyncDialog
+      :open="showSyncDialog"
+      :task-count="pendingSyncTasks.length"
+      @sync="handleSync"
+      @dismiss="handleDismissSync"
+    />
+  </template>
 </template>

@@ -67,6 +67,12 @@
     "yesterday": "Wczoraj",
     "dayBeforeYesterday": "Przedwczoraj"
   },
+  "loader": {
+    "phaseAuth": "Sprawdzanie sesji…",
+    "phaseWorkspaces": "Ładowanie projektów…",
+    "phaseTasks": "Przygotowywanie zadań…",
+    "phaseReady": "Gotowe"
+  },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",
