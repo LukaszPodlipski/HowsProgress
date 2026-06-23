@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
 const { isLoggedIn, signInWithGoogle, continueLocally } = useAuth()
 const { t } = useI18n()
+
+const isSigningIn = ref(false)
 
 if (isLoggedIn.value) {
   await navigateTo('/')
@@ -14,10 +17,32 @@ const handleContinueLocally = () => {
   navigateTo('/')
 }
 
-const handleSignInWithGoogle = () => {
-  signInWithGoogle().then(async () => {
+const handleSignInWithGoogle = async () => {
+  if (isSigningIn.value) return
+
+  isSigningIn.value = true
+  const toastId = toast.loading(t('auth.signInInProgress'))
+
+  try {
+    await signInWithGoogle()
+    toast.dismiss(toastId)
     await navigateTo('/')
-  })
+  } catch (error) {
+    toast.dismiss(toastId)
+
+    const message = error instanceof Error ? error.message : t('auth.signInFailed')
+    if (message.includes('Google OAuth client secret')) {
+      toast.error(t('auth.signInMissingClientSecret'))
+    } else if (message.includes('Desktop Google OAuth client ID')) {
+      toast.error(t('auth.signInMissingDesktopClientId'))
+    } else if (message.includes('Google OAuth client ID')) {
+      toast.error(t('auth.signInMissingClientId'))
+    } else {
+      toast.error(message.length > 120 ? t('auth.signInFailed') : message)
+    }
+  } finally {
+    isSigningIn.value = false
+  }
 }
 </script>
 
@@ -33,7 +58,7 @@ const handleSignInWithGoogle = () => {
       </div>
 
       <div class="flex flex-col gap-3">
-        <Button class="w-full" @click="handleSignInWithGoogle">
+        <Button class="w-full" :disabled="isSigningIn" @click="handleSignInWithGoogle">
           <Icon name="logos:google-icon" class="size-4" />
           {{ t('auth.signInWithGoogle') }}
         </Button>
@@ -44,7 +69,12 @@ const handleSignInWithGoogle = () => {
           <Separator class="flex-1" />
         </div>
 
-        <Button variant="outline" class="w-full" @click="handleContinueLocally">
+        <Button
+          variant="outline"
+          class="w-full"
+          :disabled="isSigningIn"
+          @click="handleContinueLocally"
+        >
           {{ t('auth.continueLocally') }}
         </Button>
       </div>

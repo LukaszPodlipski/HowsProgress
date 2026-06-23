@@ -5,6 +5,8 @@ import {
   signInWithPopup,
   signOut as firebaseSignOut,
 } from 'firebase/auth'
+import { signInWithGoogleTauri } from '@/lib/googleOauthTauri'
+import { isTauriRuntime } from '@/lib/tauriRuntime'
 
 const LOCAL_MODE_KEY = 'how-is-your-progress-local-mode'
 
@@ -16,6 +18,7 @@ const isLocalMode = ref<boolean>(
 
 export const useAuth = () => {
   const { $firebaseAuth } = useNuxtApp()
+  const config = useRuntimeConfig()
 
   const initAuth = (): Promise<void> => {
     return new Promise(resolve => {
@@ -30,9 +33,23 @@ export const useAuth = () => {
   }
 
   const signInWithGoogle = async () => {
+    const auth = $firebaseAuth as Auth
+
+    if (isTauriRuntime()) {
+      const clientId = config.public.googleClientId
+      const clientSecret = config.public.googleClientSecret
+      if (!clientId) {
+        throw new Error('Google OAuth client ID is not configured')
+      }
+      if (!clientSecret) {
+        throw new Error('Google OAuth client secret is not configured')
+      }
+      await signInWithGoogleTauri(auth, clientId, clientSecret)
+      return
+    }
+
     const provider = new GoogleAuthProvider()
-    // signInWithPopup works in both browser and Tauri v2 webview (window.open is not restricted by default)
-    await signInWithPopup($firebaseAuth as Auth, provider)
+    await signInWithPopup(auth, provider)
   }
 
   const signOut = async () => {

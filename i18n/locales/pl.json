@@ -80,7 +80,12 @@
     "continueLocally": "Kontynuuj bez konta",
     "localModeDisclaimer": "Bez konta dane są zapisywane tylko lokalnie na tym urządzeniu.",
     "signIn": "Zaloguj się",
-    "tagline": "Śledź swoje codzienne zadania w pracy."
+    "tagline": "Śledź swoje codzienne zadania w pracy.",
+    "signInInProgress": "Otwieranie logowania Google…",
+    "signInFailed": "Nie udało się zalogować przez Google",
+    "signInMissingClientId": "Brak Google Client ID — dodaj NUXT_PUBLIC_GOOGLE_CLIENT_ID do pliku .env",
+    "signInMissingClientSecret": "Brak Client Secret — w Google Cloud (Web client) utwórz secret i dodaj NUXT_PUBLIC_GOOGLE_CLIENT_SECRET do .env",
+    "signInMissingDesktopClientId": "Brak Desktop Client ID — utwórz klienta OAuth typu „Aplikacja na komputer” w Google Cloud i dodaj NUXT_PUBLIC_GOOGLE_DESKTOP_CLIENT_ID do .env"
   },
   "onboarding": {
     "welcome": "Witaj w How's Progress!",

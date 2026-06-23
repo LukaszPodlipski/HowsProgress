@@ -1,23 +1,25 @@
 {
-  "productName": "How Is Your Progress",
+  "productName": "Hows Progress",
   "version": "1.0.0",
   "identifier": "com.howisyourprogress.app",
   "build": {
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build:tauri",
     "devUrl": "http://localhost:3000",
     "frontendDist": "../.output/public"
   },
   "app": {
     "windows": [
       {
-        "title": "How Is Your Progress",
-        "width": 800,
-        "height": 600,
-        "minWidth": 600,
-        "minHeight": 400,
+        "label": "main",
+        "title": "How's Progress",
+        "width": 1100,
+        "height": 760,
+        "minWidth": 720,
+        "minHeight": 520,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true
       }
     ],
     "security": {
@@ -32,7 +34,9 @@
       "icons/64x64.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.png"
+      "icons/icon.png",
+      "icons/icon.ico",
+      "icons/icon.icns"
     ]
   }
 }

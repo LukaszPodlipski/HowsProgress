@@ -1,7 +1,13 @@
 import tailwindcss from '@tailwindcss/vite'
 
+const isTauriBuild = process.env.TAURI_ENV_PLATFORM !== undefined
+
 export default defineNuxtConfig({
   devtools: { enabled: true },
+
+  devServer: {
+    port: 3000,
+  },
 
   runtimeConfig: {
     public: {
@@ -11,6 +17,8 @@ export default defineNuxtConfig({
       firebaseStorageBucket: '',
       firebaseMessagingSenderId: '',
       firebaseAppId: '',
+      googleClientId: '',
+      googleClientSecret: '',
     },
   },
   modules: ['shadcn-nuxt', '@nuxt/eslint', '@nuxt/image', '@nuxt/icon', '@nuxtjs/i18n'],
@@ -18,6 +26,7 @@ export default defineNuxtConfig({
   ssr: false,
 
   app: {
+    baseURL: isTauriBuild ? './' : '/',
     head: {
       title: "So How's progress?",
       meta: [
@@ -36,6 +45,9 @@ export default defineNuxtConfig({
   ],
 
   vite: {
+    server: {
+      strictPort: true,
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     plugins: tailwindcss() as any,
     // TS2322: @tailwindcss/vite and Nuxt resolve different copies of rollup,
