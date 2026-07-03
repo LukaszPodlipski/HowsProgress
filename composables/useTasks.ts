@@ -1,6 +1,7 @@
 import type { Task } from '@/types'
 import type { TaskForm } from '@/composables/useTaskForm'
-import { getNextTaskStatus } from '@/types/enums'
+import { sortTasksByDisplayDate } from '@/composables/tasks/taskDateGroups'
+import { getNextTaskStatus, TaskStatus } from '@/types/enums'
 import type { Firestore } from 'firebase/firestore'
 import {
   collection,
@@ -374,6 +375,94 @@ export const useTasks = () => {
     localStorage.setItem(SKIP_SYNC_KEY, 'true')
   }
 
+  /* --- carry over open tasks from yesterday to today --- */
+
+  const getYesterdayDateString = (): string => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    return toLocalDateString(yesterday)
+  }
+
+  const carryOverOpenTaskCount = computed(() => {
+    const yesterdayStr = getYesterdayDateString()
+    return tasks.value.filter(
+      t =>
+        t.displayDate === yesterdayStr &&
+        (t.status === TaskStatus.TO_DO || t.status === TaskStatus.IN_PROGRESS)
+    ).length
+  })
+
+  const carryOverOpenTasks = async (): Promise<number> => {
+    const wsId = activeWorkspaceId.value
+    if (!wsId) return 0
+
+    const now = new Date()
+    const yesterdayStr = getYesterdayDateString()
+    const todayStr = toLocalDateString(now)
+
+    const carryIds = new Set(
+      tasks.value
+        .filter(
+          t =>
+            t.displayDate === yesterdayStr &&
+            (t.status === TaskStatus.TO_DO || t.status === TaskStatus.IN_PROGRESS)
+        )
+        .map(t => t.id)
+    )
+
+    if (carryIds.size === 0) return 0
+
+    const originalMap = new Map(tasks.value.map(t => [t.id, t]))
+
+    const todayMaxOrder = tasks.value
+      .filter(t => t.displayDate === todayStr && !carryIds.has(t.id))
+      .reduce((max, t) => Math.max(max, t.order), -1)
+
+    const carriedTasks = tasks.value
+      .filter(t => carryIds.has(t.id))
+      .sort((a, b) => a.order - b.order)
+
+    let nextOrder = todayMaxOrder + 1
+    const carriedOrders = new Map(carriedTasks.map(t => [t.id, nextOrder++]))
+
+    const updated = tasks.value.map(t =>
+      carryIds.has(t.id) ? { ...t, displayDate: todayStr, order: carriedOrders.get(t.id)! } : t
+    )
+    const arr = sortTasksByDisplayDate(updated, now).map((task, index) => ({
+      ...task,
+      order: index,
+    }))
+
+    isReordering = true
+    tasks.value = arr
+
+    try {
+      if (isLoggedIn.value && currentUser.value) {
+        const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
+        const batch = writeBatch($firebaseDb as Firestore)
+
+        for (const task of arr) {
+          const orig = originalMap.get(task.id)
+          if (!orig) continue
+          const updates: Record<string, unknown> = {}
+          if (task.order !== orig.order) updates.order = task.order
+          if (task.displayDate !== orig.displayDate) updates.displayDate = task.displayDate
+          if (Object.keys(updates).length > 0) {
+            batch.update(doc(col, task.id), updates)
+          }
+        }
+
+        await batch.commit()
+      } else {
+        saveToLocalStorage(wsId, arr)
+      }
+    } finally {
+      isReordering = false
+    }
+
+    return carryIds.size
+  }
+
   return {
     tasks,
     fetchTasks,
@@ -384,6 +473,8 @@ export const useTasks = () => {
     restoreTask,
     reorderTask,
     reorderTasksOrdered,
+    carryOverOpenTasks,
+    carryOverOpenTaskCount,
     teardownFirestore,
     checkSyncNeeded,
     syncLocalTasksToFirestore,

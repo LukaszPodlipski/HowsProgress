@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Toaster } from '@/components/ui/sonner'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import type { Firestore } from 'firebase/firestore'
 import type { Task } from '@/types'
 
@@ -87,9 +87,7 @@ watch([isLoggedIn, isLocalMode], ([loggedIn, localMode]) => {
         <AppSidebar />
         <AppProductTour :blocked="showSyncDialog" />
         <SidebarInset>
-          <header class="flex h-12 shrink-0 items-center gap-2 px-4 border-b border-border/50">
-            <SidebarTrigger class="-ml-1" />
-          </header>
+          <AppHeader />
           <NuxtPage class="w-full" />
         </SidebarInset>
       </SidebarProvider>
