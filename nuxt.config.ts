@@ -25,6 +25,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   ssr: false,
 
+  // Force static output — Netlify auto-detects netlify-legacy, which breaks SPA deploys.
+  nitro: {
+    preset: 'static',
+  },
+
   app: {
     baseURL: isTauriBuild ? './' : '/',
     head: {
