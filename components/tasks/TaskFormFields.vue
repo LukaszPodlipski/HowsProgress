@@ -4,7 +4,7 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupText,
-  InputGroupTextarea,
+  InputGroupInput,
 } from '@/components/ui/input-group'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -244,16 +244,15 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
   >
     <InputGroup :class="{ 'flex-1 min-h-0': fillHeight }">
       <div class="relative w-full">
-        <InputGroupTextarea
+        <InputGroupInput
           v-model="title"
           v-bind="titleAttrs"
+          data-task-content-field
           :placeholder="t('task.titlePlaceholder')"
-          class="pb-2!"
-          :rows="1"
           :maxlength="100"
+          class="min-h-9 py-2 shadow-none"
           :class="{
             'aria-invalid': errors.title,
-            'min-h-7': hasExtendedContent,
             'transition-colors focus-visible:bg-accent/25': hasExtendedContent,
             'flex-none': fillHeight,
             'pr-10': !showDescriptionShortcutHint,
@@ -270,7 +269,7 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
         >
           <span
             v-if="showDescriptionShortcutHint"
-            class="pointer-events-none absolute top-3 right-2 flex items-center gap-1 text-xs text-muted-foreground"
+            class="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-1 text-xs text-muted-foreground"
           >
             <span class="flex items-center gap-0.5" aria-hidden="true">
               <kbd :class="shortcutKbdClass">Alt</kbd>
@@ -351,7 +350,7 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
         @remove="removeExternalElement()"
       />
 
-      <InputGroupAddon align="block-end">
+      <InputGroupAddon align="block-end" :class="{ 'mt-4': !hasDescriptionElement }">
         <DropdownMenu v-if="!isAddElementMenuExhausted" v-model:open="addElementMenuOpen">
           <DropdownMenuTrigger as-child>
             <InputGroupButton
