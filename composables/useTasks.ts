@@ -44,6 +44,38 @@ const getTasksCol = (db: Firestore, uid: string, wsId: string) =>
 const toFirestoreDoc = (obj: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined))
 
+const isOpenTaskStatus = (status: TaskStatus): boolean =>
+  status === TaskStatus.TO_DO || status === TaskStatus.IN_PROGRESS
+
+/** Insert index in display-sorted list for a completed today-task, or null to append. */
+const getCompletedTodayInsertIndex = (sorted: Task[], todayStr: string): number | null => {
+  let firstTodayIdx = -1
+  let lastTodayIdx = -1
+
+  for (let i = 0; i < sorted.length; i++) {
+    if (sorted[i]!.displayDate === todayStr) {
+      if (firstTodayIdx === -1) firstTodayIdx = i
+      lastTodayIdx = i
+    }
+  }
+
+  if (firstTodayIdx === -1) return null
+
+  let insertBefore: number | null = null
+  for (let i = lastTodayIdx; i >= firstTodayIdx; i--) {
+    if (isOpenTaskStatus(sorted[i]!.status)) {
+      insertBefore = i
+    } else if (insertBefore !== null) {
+      break
+    }
+  }
+
+  return insertBefore
+}
+
+const assignDisplayOrders = (orderedTasks: Task[]): Task[] =>
+  orderedTasks.map((task, index) => ({ ...task, order: index }))
+
 /* --------------------------- FIRESTORE LISTENER ----------------------------------- */
 
 const setupFirestoreListener = (db: Firestore, uid: string, wsId: string) => {
@@ -146,7 +178,7 @@ export const useTasks = () => {
       await ensureDefaultWorkspace()
     }
     const wsId = activeWorkspaceId.value!
-    const newOrder = tasks.value.length
+    const todayStr = toLocalDateString()
 
     const task: Task = {
       id: crypto.randomUUID(),
@@ -154,11 +186,52 @@ export const useTasks = () => {
       description: taskForm.description,
       status: taskForm.taskStatus,
       createdAt: new Date().toISOString(),
-      displayDate: toLocalDateString(),
+      displayDate: todayStr,
       gitUrl: taskForm.gitUrl,
       jiraUrl: taskForm.jiraUrl,
       externalUrl: taskForm.externalUrl?.trim() || undefined,
-      order: newOrder,
+      order: tasks.value.length,
+    }
+
+    const sortedForInsert =
+      task.status === TaskStatus.COMPLETED && task.displayDate === todayStr
+        ? sortTasksByDisplayDate(tasks.value, new Date())
+        : null
+
+    const insertIdx =
+      sortedForInsert !== null ? getCompletedTodayInsertIndex(sortedForInsert, todayStr) : null
+
+    if (insertIdx !== null && sortedForInsert !== null) {
+      const orderedTasks = assignDisplayOrders([
+        ...sortedForInsert.slice(0, insertIdx),
+        task,
+        ...sortedForInsert.slice(insertIdx),
+      ])
+      isReordering = true
+      tasks.value = orderedTasks
+
+      try {
+        if (isLoggedIn.value && currentUser.value) {
+          const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
+          const batch = writeBatch($firebaseDb as Firestore)
+
+          for (const t of orderedTasks) {
+            if (t.id === task.id) {
+              batch.set(doc(col, t.id), toFirestoreDoc(t as unknown as Record<string, unknown>))
+            } else {
+              batch.update(doc(col, t.id), { order: t.order })
+            }
+          }
+
+          await batch.commit()
+        } else {
+          saveToLocalStorage(wsId, orderedTasks)
+        }
+      } finally {
+        isReordering = false
+      }
+
+      return task
     }
 
     if (isLoggedIn.value && currentUser.value) {
