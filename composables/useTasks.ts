@@ -1,6 +1,10 @@
 import type { Task } from '@/types'
 import type { TaskForm } from '@/composables/useTaskForm'
-import { sortTasksByDisplayDate } from '@/composables/tasks/taskDateGroups'
+import {
+  getLastPeriodGroupKey,
+  sortTasksByDisplayDate,
+  taskMatchesGroupKey,
+} from '@/composables/tasks/taskDateGroups'
 import { getNextTaskStatus, TaskStatus } from '@/types/enums'
 import type { Firestore } from 'firebase/firestore'
 import {
@@ -375,42 +379,32 @@ export const useTasks = () => {
     localStorage.setItem(SKIP_SYNC_KEY, 'true')
   }
 
-  /* --- carry over open tasks from yesterday to today --- */
+  /* --- carry over open tasks from last period to today --- */
 
-  const getYesterdayDateString = (): string => {
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    return toLocalDateString(yesterday)
-  }
+  const getOpenTasksFromLastPeriod = (now: Date): Task[] => {
+    const groupKey = getLastPeriodGroupKey(tasks.value, now)
+    if (!groupKey) return []
 
-  const carryOverOpenTaskCount = computed(() => {
-    const yesterdayStr = getYesterdayDateString()
     return tasks.value.filter(
       t =>
-        t.displayDate === yesterdayStr &&
+        taskMatchesGroupKey(t.displayDate, groupKey, now) &&
         (t.status === TaskStatus.TO_DO || t.status === TaskStatus.IN_PROGRESS)
-    ).length
-  })
+    )
+  }
 
-  const carryOverOpenTasks = async (): Promise<number> => {
+  const carryOverOpenTaskCount = computed(() => getOpenTasksFromLastPeriod(new Date()).length)
+
+  const carryOverOpenTasks = async (): Promise<{ count: number; snapshot: Task[] }> => {
     const wsId = activeWorkspaceId.value
-    if (!wsId) return 0
+    if (!wsId) return { count: 0, snapshot: [] }
 
     const now = new Date()
-    const yesterdayStr = getYesterdayDateString()
     const todayStr = toLocalDateString(now)
+    const snapshot = tasks.value.map(t => ({ ...t }))
 
-    const carryIds = new Set(
-      tasks.value
-        .filter(
-          t =>
-            t.displayDate === yesterdayStr &&
-            (t.status === TaskStatus.TO_DO || t.status === TaskStatus.IN_PROGRESS)
-        )
-        .map(t => t.id)
-    )
+    const carryIds = new Set(getOpenTasksFromLastPeriod(now).map(t => t.id))
 
-    if (carryIds.size === 0) return 0
+    if (carryIds.size === 0) return { count: 0, snapshot: [] }
 
     const originalMap = new Map(tasks.value.map(t => [t.id, t]))
 
@@ -460,7 +454,41 @@ export const useTasks = () => {
       isReordering = false
     }
 
-    return carryIds.size
+    return { count: carryIds.size, snapshot }
+  }
+
+  const restoreTasksSnapshot = async (snapshot: Task[]): Promise<void> => {
+    const wsId = activeWorkspaceId.value
+    if (!wsId || snapshot.length === 0) return
+
+    const currentMap = new Map(tasks.value.map(t => [t.id, t]))
+
+    isReordering = true
+    tasks.value = snapshot.map(t => ({ ...t }))
+
+    try {
+      if (isLoggedIn.value && currentUser.value) {
+        const col = getTasksCol($firebaseDb as Firestore, currentUser.value.uid, wsId)
+        const batch = writeBatch($firebaseDb as Firestore)
+
+        for (const task of snapshot) {
+          const current = currentMap.get(task.id)
+          if (!current) continue
+          const updates: Record<string, unknown> = {}
+          if (task.order !== current.order) updates.order = task.order
+          if (task.displayDate !== current.displayDate) updates.displayDate = task.displayDate
+          if (Object.keys(updates).length > 0) {
+            batch.update(doc(col, task.id), updates)
+          }
+        }
+
+        await batch.commit()
+      } else {
+        saveToLocalStorage(wsId, tasks.value)
+      }
+    } finally {
+      isReordering = false
+    }
   }
 
   return {
@@ -475,6 +503,7 @@ export const useTasks = () => {
     reorderTasksOrdered,
     carryOverOpenTasks,
     carryOverOpenTaskCount,
+    restoreTasksSnapshot,
     teardownFirestore,
     checkSyncNeeded,
     syncLocalTasksToFirestore,

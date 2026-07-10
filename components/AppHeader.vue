@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { toast } from 'vue-sonner'
 
-const { carryOverOpenTasks, carryOverOpenTaskCount } = useTasks()
+const { carryOverOpenTasks, carryOverOpenTaskCount, restoreTasksSnapshot } = useTasks()
 const { t } = useI18n()
 
 const isCarryingOver = ref(false)
@@ -12,9 +12,14 @@ const handleCarryOver = async () => {
   if (isCarryingOver.value) return
   isCarryingOver.value = true
   try {
-    const count = await carryOverOpenTasks()
+    const { count, snapshot } = await carryOverOpenTasks()
     if (count > 0) {
-      toast(t('carryOver.success', { count }))
+      toast(t('carryOver.success', { count }), {
+        action: {
+          label: t('task.undo'),
+          onClick: () => restoreTasksSnapshot(snapshot),
+        },
+      })
     } else {
       toast(t('carryOver.none'))
     }

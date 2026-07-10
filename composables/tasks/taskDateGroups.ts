@@ -40,6 +40,21 @@ export const sortTasksByDisplayDate = (items: Task[], now: Date): Task[] => {
   })
 }
 
+/** Group key of the most recent period before today (yesterday, day before yesterday, or week). */
+export const getLastPeriodGroupKey = (items: Task[], now: Date): string | null => {
+  let latestDate = ''
+  for (const task of items) {
+    if (daysDiff(task.displayDate, now) > 0 && task.displayDate > latestDate) {
+      latestDate = task.displayDate
+    }
+  }
+  if (!latestDate) return null
+  return getGroupKey(latestDate, now)
+}
+
+export const taskMatchesGroupKey = (displayDate: string, groupKey: string, now: Date): boolean =>
+  getGroupKey(displayDate, now) === groupKey
+
 export const formatDateGroupLabel = (
   displayDate: string,
   now: Date,

@@ -68,10 +68,10 @@
     "dayBeforeYesterday": "Przedwczoraj"
   },
   "carryOver": {
-    "button": "Przenieś z wczoraj",
-    "buttonAriaLabel": "Przenieś nieukończone zadania z wczoraj na dziś",
+    "button": "Przenieś ostatnie nieukończone na dzisiaj",
+    "buttonAriaLabel": "Przenieś nieukończone zadania z ostatniego okresu na dziś",
     "success": "Przeniesiono {count} zadań na dziś",
-    "none": "Brak zadań do przeniesienia z wczoraj"
+    "none": "Brak zadań do przeniesienia z ostatniego okresu"
   },
   "loader": {
     "phaseAuth": "Sprawdzanie sesji…",
