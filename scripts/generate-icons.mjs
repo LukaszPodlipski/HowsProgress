@@ -1,18 +1,21 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import sharp from 'sharp'
 
 const logoPath = 'assets/images/logo.png'
 const appIconPath = 'src-tauri/app-icon.png'
-const squareSize = 1024
 
-await sharp(logoPath)
-  .resize(squareSize, squareSize, {
-    fit: 'contain',
-    background: { r: 0, g: 0, b: 0, alpha: 1 },
-  })
-  .png()
-  .toFile(appIconPath)
+async function writeSquareIcon(input, output, size) {
+  await sharp(input)
+    .resize(size, size, {
+      fit: 'cover',
+      position: 'centre',
+    })
+    .png()
+    .toFile(output)
+}
+
+await writeSquareIcon(logoPath, appIconPath, 1024)
 
 console.log(`Created ${appIconPath}`)
 
@@ -27,13 +30,7 @@ if (result.status !== 0) {
 
 copyFileSync('src-tauri/icons/icon.ico', 'public/favicon.ico')
 
-await sharp(logoPath)
-  .resize(512, 512, {
-    fit: 'contain',
-    background: { r: 0, g: 0, b: 0, alpha: 1 },
-  })
-  .png()
-  .toFile('public/favicon.png')
+await writeSquareIcon(logoPath, 'public/favicon.png', 512)
 
 copyFileSync(logoPath, 'public/logo.png')
 

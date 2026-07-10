@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { brandLogoUrl } from '@/lib/brandLogo'
 
 const { currentUser, isLoggedIn, isLocalMode, userInitials, signOut } = useAuth()
 const { t } = useI18n()
@@ -30,8 +31,8 @@ const { open } = useSidebar()
   <Sidebar variant="inset" collapsible="icon">
     <SidebarHeader>
       <div class="flex items-center gap-4 px-1 py-1 h-8 min-h-8">
-        <NuxtImg
-          src="/logo.png"
+        <img
+          :src="brandLogoUrl"
           alt="How's progress?"
           width="16"
           height="16"

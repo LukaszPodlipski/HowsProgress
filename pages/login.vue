@@ -2,6 +2,7 @@
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { brandLogoUrl } from '@/lib/brandLogo'
 
 const { isLoggedIn, signInWithGoogle, continueLocally } = useAuth()
 const { t } = useI18n()
@@ -52,7 +53,7 @@ const handleSignInWithGoogle = async () => {
       class="w-full max-w-sm bg-card border border-border rounded-xl shadow-sm p-8 flex flex-col gap-6"
     >
       <div class="flex flex-col items-center gap-2 text-center">
-        <NuxtImg src="/logo.png" alt="How's Progress?" width="56" height="56" />
+        <img :src="brandLogoUrl" alt="How's Progress?" width="56" height="56" />
         <h1 class="text-xl font-semibold tracking-tight">How's Progress?</h1>
         <p class="text-sm text-muted-foreground">{{ t('auth.tagline') }}</p>
       </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { BootstrapPhase } from '@/composables/useAppBootstrap'
+import { brandLogoUrl } from '@/lib/brandLogo'
 
 const props = defineProps<{
   phase: BootstrapPhase
@@ -64,8 +65,8 @@ onMounted(() => {
     <div class="app-loader__content">
       <div class="app-loader__mark">
         <div class="app-loader__ring" aria-hidden="true" />
-        <NuxtImg
-          src="/logo.png"
+        <img
+          :src="brandLogoUrl"
           alt=""
           width="72"
           height="72"

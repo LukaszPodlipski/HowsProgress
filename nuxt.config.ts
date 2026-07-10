@@ -1,6 +1,9 @@
 import tailwindcss from '@tailwindcss/vite'
 
-const isTauriBuild = process.env.TAURI_ENV_PLATFORM !== undefined
+const isTauriBuild =
+  process.env.TAURI_ENV_PLATFORM !== undefined || process.env.NUXT_APP_BASE_URL === './'
+
+const publicAsset = (file: string) => `${isTauriBuild ? './' : '/'}${file}`
 
 export default defineNuxtConfig({
   devtools: { enabled: true },
@@ -39,8 +42,8 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       ],
       link: [
-        { rel: 'icon', type: 'image/png', sizes: '512x512', href: '/favicon.png' },
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '512x512', href: publicAsset('favicon.png') },
+        { rel: 'icon', type: 'image/x-icon', href: publicAsset('favicon.ico') },
       ],
     },
   },
