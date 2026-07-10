@@ -28,6 +28,14 @@ export const useSortedTasks = (tasks: Ref<Task[]>) => {
             today: t('dateSeparator.today'),
             yesterday: t('dateSeparator.yesterday'),
             dayBeforeYesterday: t('dateSeparator.dayBeforeYesterday'),
+            friday: displayDate => {
+              const date = new Date(displayDate + 'T00:00:00')
+              const formatted = date.toLocaleDateString('pl-PL', {
+                day: 'numeric',
+                month: 'long',
+              })
+              return t('dateSeparator.friday', { date: formatted })
+            },
           })
         )
         lastGroupKey = key

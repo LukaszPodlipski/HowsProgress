@@ -65,7 +65,8 @@
   "dateSeparator": {
     "today": "Dzisiaj",
     "yesterday": "Wczoraj",
-    "dayBeforeYesterday": "Przedwczoraj"
+    "dayBeforeYesterday": "Przedwczoraj",
+    "friday": "Piątek {date}"
   },
   "carryOver": {
     "button": "Przenieś ostatnie nieukończone na dzisiaj",

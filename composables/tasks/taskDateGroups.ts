@@ -15,9 +15,19 @@ export const getMondayOfWeek = (date: Date): Date => {
   return d
 }
 
+/** On Monday, tasks from the previous Friday get their own group instead of a weekly one. */
+export const isMondayFridayGroup = (displayDate: string, now: Date): boolean => {
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  if (today.getDay() !== 1) return false
+  if (daysDiff(displayDate, now) !== 3) return false
+  return new Date(displayDate + 'T00:00:00').getDay() === 5
+}
+
 export const getGroupKey = (displayDate: string, now: Date): string => {
   const diff = daysDiff(displayDate, now)
   if (diff >= 0 && diff <= 2) return displayDate
+  if (isMondayFridayGroup(displayDate, now)) return displayDate
   const date = new Date(displayDate + 'T00:00:00')
   const monday = getMondayOfWeek(date)
   return `week-${monday.toISOString().slice(0, 10)}`
@@ -26,6 +36,7 @@ export const getGroupKey = (displayDate: string, now: Date): string => {
 export const getGroupSortKey = (displayDate: string, now: Date): string => {
   const diff = daysDiff(displayDate, now)
   if (diff >= 0 && diff <= 2) return displayDate
+  if (isMondayFridayGroup(displayDate, now)) return displayDate
   const date = new Date(displayDate + 'T00:00:00')
   const monday = getMondayOfWeek(date)
   return monday.toISOString().slice(0, 10)
@@ -40,7 +51,7 @@ export const sortTasksByDisplayDate = (items: Task[], now: Date): Task[] => {
   })
 }
 
-/** Group key of the most recent period before today (yesterday, day before yesterday, or week). */
+/** Group key of the most recent period before today (yesterday, day before yesterday, Friday, or week). */
 export const getLastPeriodGroupKey = (items: Task[], now: Date): string | null => {
   let latestDate = ''
   for (const task of items) {
@@ -55,16 +66,24 @@ export const getLastPeriodGroupKey = (items: Task[], now: Date): string | null =
 export const taskMatchesGroupKey = (displayDate: string, groupKey: string, now: Date): boolean =>
   getGroupKey(displayDate, now) === groupKey
 
+export type DateGroupLabels = {
+  today: string
+  yesterday: string
+  dayBeforeYesterday: string
+  friday: (displayDate: string) => string
+}
+
 export const formatDateGroupLabel = (
   displayDate: string,
   now: Date,
-  labels: { today: string; yesterday: string; dayBeforeYesterday: string }
+  labels: DateGroupLabels
 ): string => {
   const diff = daysDiff(displayDate, now)
 
   if (diff === 0) return labels.today
   if (diff === 1) return labels.yesterday
   if (diff === 2) return labels.dayBeforeYesterday
+  if (isMondayFridayGroup(displayDate, now)) return labels.friday(displayDate)
 
   const date = new Date(displayDate + 'T00:00:00')
   const monday = getMondayOfWeek(date)
