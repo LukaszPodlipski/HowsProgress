@@ -6,6 +6,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import type { Workspace } from '@/types'
 
 const { t } = useI18n()
 const { workspaces, activeWorkspaceId, setActiveWorkspace, deleteWorkspace } = useWorkspaces()
+const { isMobile, setOpenMobile } = useSidebar()
 
 const showAddDialog = ref(false)
 const showEditDialog = ref(false)
@@ -43,6 +45,11 @@ const openDeleteDialog = (ws: Workspace) => {
 const handleDeleteConfirm = async (wsId: string) => {
   await deleteWorkspace(wsId)
 }
+
+const handleSelectWorkspace = (wsId: string) => {
+  setActiveWorkspace(wsId)
+  if (isMobile.value) setOpenMobile(false)
+}
 </script>
 
 <template>
@@ -62,7 +69,7 @@ const handleDeleteConfirm = async (wsId: string) => {
                 'min-w-0 pr-8 group-hover/item:bg-sidebar-accent group-hover/item:text-sidebar-accent-foreground',
                 openMenuWsId === ws.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : '',
               ]"
-              @click="setActiveWorkspace(ws.id)"
+              @click="handleSelectWorkspace(ws.id)"
             >
               <span class="text-base leading-none shrink-0">{{ ws.emoji }}</span>
               <Tooltip>

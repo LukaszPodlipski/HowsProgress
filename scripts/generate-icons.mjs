@@ -44,4 +44,6 @@ if (existsSync(outputPublic)) {
   copyFileSync('public/logo.png', `${outputPublic}/logo.png`)
 }
 
-console.log('Icons generated: src-tauri/icons/, public/favicon.ico, public/favicon.png, public/logo.png')
+console.log(
+  'Icons generated: src-tauri/icons/, public/favicon.ico, public/favicon.png, public/logo.png'
+)
