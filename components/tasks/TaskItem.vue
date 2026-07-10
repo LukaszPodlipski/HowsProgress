@@ -5,6 +5,7 @@ import { Icon } from '@iconify/vue'
 import type { HTMLAttributes } from 'vue'
 import type { Task } from '@/types'
 import { useI18n } from 'vue-i18n'
+import { toast } from 'vue-sonner'
 
 const props = withDefaults(
   defineProps<{
@@ -49,6 +50,8 @@ const onDragStart = (event: DragEvent) => {
 }
 
 const { t } = useI18n()
+
+const COPY_TOAST_DURATION_MS = 1000
 
 const STATUS_ICON_MAP: Record<TaskStatus, { icon: string; color: string }> = {
   [TaskStatus.TO_DO]: { icon: 'lets-icons:paper-duotone', color: 'text-blue-500' },
@@ -99,6 +102,24 @@ const handleItemClick = () => {
   if (!props.clickable || !isExpandable.value) return
   isExpanded.value = !isExpanded.value
 }
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast(t('task.copied'), { duration: COPY_TOAST_DURATION_MS })
+  } catch {
+    toast.error(t('task.copyFailed'))
+  }
+}
+
+const handleCopyTitle = () => {
+  copyToClipboard(props.task.title)
+}
+
+const handleCopyDescription = () => {
+  if (!props.task.description) return
+  copyToClipboard(props.task.description)
+}
 </script>
 
 <template>
@@ -127,7 +148,14 @@ const handleItemClick = () => {
           >
             <Icon :icon="statusIcon.icon" class="size-4" :class="[statusIcon.color]" />
           </button>
-          <span class="min-w-0 wrap-break-word text-balance">{{ task.title }}</span>
+          <button
+            type="button"
+            class="min-w-0 cursor-pointer text-left font-inherit wrap-break-word text-balance rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            :aria-label="t('task.copyTitleAriaLabel')"
+            @click.stop="handleCopyTitle"
+          >
+            {{ task.title }}
+          </button>
         </ItemTitle>
         <div class="flex items-center gap-0.5">
           <div
@@ -191,12 +219,15 @@ const handleItemClick = () => {
                 : 'overflow-hidden max-h-[4.5em]'
           "
         >
-          <p
+          <button
             ref="descriptionRef"
-            class="text-sm text-muted-foreground leading-normal whitespace-pre-wrap wrap-break-word text-balance"
+            type="button"
+            class="cursor-pointer w-full text-left text-sm text-muted-foreground leading-normal whitespace-pre-wrap wrap-break-word text-balance rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            :aria-label="t('task.copyDescriptionAriaLabel')"
+            @click.stop="handleCopyDescription"
           >
             {{ task.description }}
-          </p>
+          </button>
         </div>
         <div
           v-if="!props.descriptionAlwaysExpanded && !isExpanded && isOverflowing"
