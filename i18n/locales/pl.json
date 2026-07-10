@@ -71,6 +71,7 @@
   "carryOver": {
     "button": "Przenieś ostatnie nieukończone na dzisiaj",
     "buttonAriaLabel": "Przenieś nieukończone zadania z ostatniego okresu na dziś",
+    "menuAriaLabel": "Więcej akcji",
     "success": "Przeniesiono {count} zadań na dziś",
     "none": "Brak zadań do przeniesienia z ostatniego okresu"
   },
