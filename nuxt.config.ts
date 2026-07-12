@@ -89,7 +89,7 @@ export default defineNuxtConfig({
     mode: 'css',
     cssLayer: 'base',
     clientBundle: {
-      icons: ['logos:apple', 'mdi:microsoft-windows'],
+      icons: ['logos:apple', 'mdi:microsoft-windows', 'logos:google-icon'],
       scan: true,
     },
   },
