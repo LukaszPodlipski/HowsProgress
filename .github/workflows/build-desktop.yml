@@ -1,0 +1,117 @@
+name: Build desktop app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - production
+    tags:
+      - 'v*'
+    paths-ignore:
+      - 'public/downloads/latest.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set release metadata
+        id: release
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+            DISPLAY_VERSION="${TAG#v}"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            TAG="desktop-v${VERSION}-build${{ github.run_number }}"
+            DISPLAY_VERSION="${VERSION}-build${{ github.run_number }}"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "display_version=$DISPLAY_VERSION" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and publish Windows installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ steps.release.outputs.tag }}
+          releaseName: Hows Progress ${{ steps.release.outputs.display_version }}
+          releaseBody: Automated desktop build for Windows.
+          releaseDraft: false
+          prerelease: ${{ steps.release.outputs.prerelease }}
+          args: '--target x86_64-pc-windows-msvc'
+
+      - name: Resolve installer download URL
+        id: installer
+        shell: pwsh
+        run: |
+          $bundlePath = "src-tauri/target/x86_64-pc-windows-msvc/release/bundle"
+          if (-not (Test-Path $bundlePath)) {
+            $bundlePath = "src-tauri/target/release/bundle"
+          }
+
+          $installer = Get-ChildItem -Path $bundlePath -Recurse -Include *.msi, *-setup.exe |
+            Sort-Object { if ($_.Extension -eq '.msi') { 0 } else { 1 } } |
+            Select-Object -First 1
+
+          if ($null -eq $installer) {
+            throw "Windows installer not found in $bundlePath"
+          }
+
+          $encodedName = $installer.Name.Replace(' ', '%20')
+          $url = "https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag }}/$encodedName"
+
+          "filename=$($installer.Name)" >> $env:GITHUB_OUTPUT
+          "url=$url" >> $env:GITHUB_OUTPUT
+
+      - name: Update latest.json
+        run: >
+          node scripts/update-latest-download.mjs
+          --version "${{ steps.release.outputs.display_version }}"
+          --url "${{ steps.installer.outputs.url }}"
+          --filename "${{ steps.installer.outputs.filename }}"
+
+      - name: Commit latest.json to production
+        shell: bash
+        run: |
+          cp public/downloads/latest.json /tmp/latest.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin production
+          git checkout production
+          git pull --ff-only origin production
+          cp /tmp/latest.json public/downloads/latest.json
+          git add public/downloads/latest.json
+          git diff --staged --quiet && echo "No changes to commit." && exit 0
+          git commit -m "chore: update desktop download metadata"
+          git push origin production

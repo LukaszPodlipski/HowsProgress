@@ -21,10 +21,19 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { brandLogoUrl } from '@/lib/brandLogo'
+import { isTauriRuntime } from '@/lib/tauriRuntime'
 
 const { currentUser, isLoggedIn, isLocalMode, userInitials, signOut } = useAuth()
 const { t } = useI18n()
 const { open } = useSidebar()
+const {
+  downloadInfo,
+  isAvailable: isDesktopDownloadAvailable,
+  downloadLabel,
+} = useDesktopDownload()
+const showDesktopDownload = computed(
+  () => !isTauriRuntime() && isDesktopDownloadAvailable.value && Boolean(downloadInfo.value?.url)
+)
 </script>
 
 <template>
@@ -50,6 +59,19 @@ const { open } = useSidebar()
 
     <SidebarFooter data-tour="account">
       <SidebarMenu>
+        <SidebarMenuItem v-if="showDesktopDownload">
+          <SidebarMenuButton
+            as="a"
+            :href="downloadInfo!.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="t('download.desktopAriaLabel')"
+          >
+            <Icon name="lucide:download" class="size-4 shrink-0" />
+            <span class="group-data-[collapsible=icon]:hidden truncate">{{ downloadLabel }}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+
         <SidebarMenuItem>
           <template v-if="isLoggedIn">
             <DropdownMenu>

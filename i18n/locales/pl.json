@@ -81,6 +81,11 @@
     "phaseTasks": "Przygotowywanie zadań…",
     "phaseReady": "Gotowe"
   },
+  "download": {
+    "desktop": "Pobierz aplikację",
+    "desktopWithVersion": "Pobierz aplikację ({version})",
+    "desktopAriaLabel": "Pobierz instalator aplikacji desktop na Windows"
+  },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
     "signOut": "Wyloguj się",
