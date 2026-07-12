@@ -14,9 +14,12 @@ permissions:
   contents: write
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      display_version: ${{ steps.release.outputs.display_version }}
+      prerelease: ${{ steps.release.outputs.prerelease }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,6 +29,7 @@ jobs:
         shell: bash
         run: |
           VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
@@ -42,6 +46,26 @@ jobs:
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           fi
 
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            rust_targets: ''
+          - platform: macos
+            runner: macos-latest
+            target: aarch64-apple-darwin
+            rust_targets: aarch64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -50,6 +74,8 @@ jobs:
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
@@ -59,57 +85,36 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build and publish Windows installer
+      - name: Build and publish desktop installer
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tauriScript: npm run tauri
-          tagName: ${{ steps.release.outputs.tag }}
-          releaseName: Hows Progress ${{ steps.release.outputs.display_version }}
-          releaseBody: Automated desktop build for Windows.
+          tagName: ${{ needs.prepare.outputs.tag }}
+          releaseName: Hows Progress ${{ needs.prepare.outputs.display_version }}
+          releaseBody: Automated desktop builds for Windows and macOS.
           releaseDraft: false
-          prerelease: ${{ steps.release.outputs.prerelease }}
-          args: '--target x86_64-pc-windows-msvc'
+          prerelease: ${{ needs.prepare.outputs.prerelease }}
+          args: '--target ${{ matrix.target }}'
 
-      - name: Resolve installer download URL
-        id: installer
-        shell: pwsh
+  publish-metadata:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync latest.json from release assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          $tag = "${{ steps.release.outputs.tag }}"
-          $headers = @{
-            Authorization = "Bearer $env:GH_TOKEN"
-            Accept = "application/vnd.github+json"
-            "X-GitHub-Api-Version" = "2022-11-28"
-          }
-
-          $release = Invoke-RestMethod `
-            -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/$tag" `
-            -Headers $headers
-
-          $asset = $release.assets | Where-Object { $_.name -like '*-setup.exe' } | Select-Object -First 1
-          if (-not $asset) {
-            $asset = $release.assets | Where-Object { $_.name -like '*.msi' } | Select-Object -First 1
-          }
-
-          if (-not $asset) {
-            throw "No installer asset found on release $tag"
-          }
-
-          "filename=$($asset.name)" >> $env:GITHUB_OUTPUT
-          "url=$($asset.browser_download_url)" >> $env:GITHUB_OUTPUT
-
-      - name: Update latest.json
         run: >
-          node scripts/update-latest-download.mjs
-          --version "${{ steps.release.outputs.display_version }}"
-          --url "${{ steps.installer.outputs.url }}"
-          --filename "${{ steps.installer.outputs.filename }}"
+          node scripts/sync-latest-download-from-release.mjs
+          --version "${{ needs.prepare.outputs.display_version }}"
+          --tag "${{ needs.prepare.outputs.tag }}"
 
       - name: Commit latest.json to production
-        shell: bash
         run: |
           cp public/downloads/latest.json /tmp/latest.json
           git config user.name "github-actions[bot]"

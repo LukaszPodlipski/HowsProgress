@@ -83,8 +83,12 @@
   },
   "download": {
     "desktop": "Pobierz aplikację",
-    "desktopWithVersion": "Pobierz aplikację ({version})",
-    "desktopAriaLabel": "Pobierz instalator aplikacji desktop na Windows"
+    "desktopVersionTooltip": "Wersja {version}",
+    "desktopAriaLabel": "Pobierz aplikację desktop",
+    "desktopAriaLabelWindows": "Pobierz instalator aplikacji na Windows",
+    "desktopAriaLabelWindowsWithVersion": "Pobierz instalator aplikacji na Windows, wersja {version}",
+    "desktopAriaLabelMacos": "Pobierz aplikację na macOS",
+    "desktopAriaLabelMacosWithVersion": "Pobierz aplikację na macOS, wersja {version}"
   },
   "auth": {
     "signInWithGoogle": "Zaloguj się przez Google",
