@@ -21,7 +21,7 @@ const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN
 
 if (!version || !tag || !repo || !token) {
   console.error(
-    'Usage: node scripts/sync-latest-download-from-release.mjs --version <version> --tag <tag> [--repo owner/name]',
+    'Usage: node scripts/sync-latest-download-from-release.mjs --version <version> --tag <tag> [--repo owner/name]'
   )
   console.error('Requires GH_TOKEN or GITHUB_TOKEN in the environment.')
   process.exit(1)
@@ -80,8 +80,8 @@ writeFileSync(
       platforms,
     },
     null,
-    2,
-  )}\n`,
+    2
+  )}\n`
 )
 
 console.log(`Updated ${outputPath}`)

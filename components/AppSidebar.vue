@@ -29,13 +29,13 @@ const { t } = useI18n()
 const { open } = useSidebar()
 const {
   activeDownload,
+  detectedPlatform,
   isAvailable: isDesktopDownloadAvailable,
   downloadTooltip,
-  downloadPlatformIcon,
   downloadAriaLabel,
 } = useDesktopDownload()
 const showDesktopDownload = computed(
-  () => !isTauriRuntime() && isDesktopDownloadAvailable.value && Boolean(activeDownload.value?.url),
+  () => !isTauriRuntime() && isDesktopDownloadAvailable.value && Boolean(activeDownload.value?.url)
 )
 </script>
 
@@ -71,9 +71,15 @@ const showDesktopDownload = computed(
                   :href="activeDownload!.url"
                   target="_blank"
                   rel="noopener noreferrer"
+                  class="justify-center"
                   :aria-label="downloadAriaLabel"
                 >
-                  <Icon :name="downloadPlatformIcon" class="size-4 shrink-0" />
+                  <Icon
+                    v-if="detectedPlatform === 'macos'"
+                    name="logos:apple"
+                    class="size-4 shrink-0"
+                  />
+                  <Icon v-else name="mdi:microsoft-windows" class="size-4 shrink-0" />
                   <span class="group-data-[collapsible=icon]:hidden truncate">{{
                     t('download.desktop')
                   }}</span>

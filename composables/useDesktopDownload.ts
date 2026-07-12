@@ -73,14 +73,6 @@ export const useDesktopDownload = () => {
     return t('download.desktopVersionTooltip', { version })
   })
 
-  const downloadPlatformIcon = computed(() => {
-    if (detectedPlatform.value === 'macos') {
-      return 'simple-icons:apple'
-    }
-
-    return 'simple-icons:microsoftwindows'
-  })
-
   const downloadAriaLabel = computed(() => {
     const version = downloadManifest.value?.version
     const platform = detectedPlatform.value
@@ -143,7 +135,6 @@ export const useDesktopDownload = () => {
     isAvailable,
     isLoading,
     downloadTooltip,
-    downloadPlatformIcon,
     downloadAriaLabel,
     loadDownloadInfo,
   }
