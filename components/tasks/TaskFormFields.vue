@@ -19,7 +19,13 @@ import { Textarea } from '@/components/ui/textarea'
 import TaskInputUrlRow from './TaskInputUrlRow.vue'
 import type { useTaskForm } from '@/composables/useTaskForm'
 import { AddElementType } from '@/types/enums'
-import { shortcutKbdClass } from '@/lib/shortcut-kbd'
+import {
+  shortcutKbdClass,
+  getShortcutModLabel,
+  getShortcutModAriaLabel,
+  isShortcutModifierPressed,
+  matchesShortcutLetter,
+} from '@/lib/keyboard-shortcuts'
 import { useEventListener, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 
@@ -36,6 +42,8 @@ const { t } = useI18n()
 
 const isTaskContentFocused = ref(false)
 const isDesktop = useMediaQuery('(min-width: 769px)')
+const shortcutModLabel = getShortcutModLabel()
+const shortcutModAria = getShortcutModAriaLabel()
 
 const isTaskContentField = (target: EventTarget | null) =>
   target instanceof HTMLElement && target.closest('[data-task-content-field]') !== null
@@ -203,10 +211,10 @@ const isShortcutTargetInForm = (event: KeyboardEvent): boolean => {
 
 const handleShortcutKeydown = (event: KeyboardEvent) => {
   if (!props.showAddElementShortcuts || !isDesktop.value) return
-  if (!event.altKey || event.ctrlKey || event.metaKey) return
+  if (!isShortcutModifierPressed(event)) return
   if (!isShortcutTargetInForm(event)) return
 
-  if (event.key.toLowerCase() === 's') {
+  if (matchesShortcutLetter(event, 's')) {
     if (!isTaskContentField(event.target)) return
     event.preventDefault()
     if (isSubmitDisabled.value) return
@@ -214,7 +222,7 @@ const handleShortcutKeydown = (event: KeyboardEvent) => {
     return
   }
 
-  if (canUseStatusShortcut.value && event.key.toLowerCase() === 'b') {
+  if (canUseStatusShortcut.value && matchesShortcutLetter(event, 'b')) {
     event.preventDefault()
     cycleTaskStatus()
     return
@@ -222,9 +230,7 @@ const handleShortcutKeydown = (event: KeyboardEvent) => {
 
   if (!canUseAddElementShortcuts.value) return
 
-  const option = addElementOptions.find(
-    item => item.shortcutKey.toLowerCase() === event.key.toLowerCase()
-  )
+  const option = addElementOptions.find(item => matchesShortcutLetter(event, item.shortcutKey))
   if (!option) return
 
   event.preventDefault()
@@ -272,7 +278,7 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
             class="pointer-events-none absolute inset-y-0 right-2 flex items-center gap-1 text-xs text-muted-foreground"
           >
             <span class="flex items-center gap-0.5" aria-hidden="true">
-              <kbd :class="shortcutKbdClass">Alt</kbd>
+              <kbd :class="shortcutKbdClass">{{ shortcutModLabel }}</kbd>
               <span class="text-[10px]">+</span>
               <kbd :class="shortcutKbdClass">O</kbd>
             </span>
@@ -386,7 +392,7 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
                 class="ml-3 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-data-highlighted:opacity-100"
                 aria-hidden="true"
               >
-                <kbd :class="shortcutKbdClass">Alt</kbd>
+                <kbd :class="shortcutKbdClass">{{ shortcutModLabel }}</kbd>
                 <span class="text-[10px] text-muted-foreground">+</span>
                 <kbd :class="shortcutKbdClass">{{ option.shortcutKey }}</kbd>
               </span>
@@ -438,9 +444,9 @@ useEventListener(document, 'keydown', handleShortcutKeydown, { capture: true })
               <span
                 v-if="showAddElementShortcuts && isDesktop && statusMenuOpen"
                 class="flex shrink-0 items-center gap-0.5"
-                :aria-label="t('task.cycleStatusShortcutAriaLabel')"
+                :aria-label="t('task.cycleStatusShortcutAriaLabel', { mod: shortcutModAria })"
               >
-                <kbd :class="shortcutKbdClass">Alt</kbd>
+                <kbd :class="shortcutKbdClass">{{ shortcutModLabel }}</kbd>
                 <span class="text-[10px] text-muted-foreground">+</span>
                 <kbd :class="shortcutKbdClass">B</kbd>
               </span>

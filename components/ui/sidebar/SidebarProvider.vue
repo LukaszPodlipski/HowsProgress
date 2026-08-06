@@ -11,6 +11,7 @@ import {
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_ICON,
 } from './utils'
+import { isSidebarToggleShortcut } from '@/lib/keyboard-shortcuts'
 
 const props = defineProps<{
   defaultOpen?: boolean
@@ -45,10 +46,9 @@ function toggleSidebar() {
 }
 
 useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault()
-    toggleSidebar()
-  }
+  if (!isSidebarToggleShortcut(event, SIDEBAR_KEYBOARD_SHORTCUT)) return
+  event.preventDefault()
+  toggleSidebar()
 })
 
 const state = computed(() => (open.value ? 'expanded' : 'collapsed'))

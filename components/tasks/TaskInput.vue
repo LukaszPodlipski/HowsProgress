@@ -4,7 +4,11 @@ import { ArrowUpIcon } from 'lucide-vue-next'
 import { InputGroupButton } from '@/components/ui/input-group'
 import TaskFormFields from './TaskFormFields.vue'
 import { useTaskForm, type TaskForm } from '@/composables/useTaskForm'
-import { shortcutKbdClass } from '@/lib/shortcut-kbd'
+import {
+  shortcutKbdClass,
+  getShortcutModLabel,
+  getShortcutModAriaLabel,
+} from '@/lib/keyboard-shortcuts'
 import { useI18n } from 'vue-i18n'
 
 export type { TaskForm }
@@ -28,6 +32,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const isDesktop = useMediaQuery('(min-width: 769px)')
+const shortcutModLabel = getShortcutModLabel()
+const shortcutModAria = getShortcutModAriaLabel()
 
 const form = useTaskForm(
   taskForm => {
@@ -66,11 +72,11 @@ defineExpose({ applySuggestion })
             class="flex items-center gap-0.5"
             :aria-label="
               submitMode === 'save'
-                ? t('task.saveShortcutAriaLabel')
-                : t('task.submitShortcutAriaLabel')
+                ? t('task.saveShortcutAriaLabel', { mod: shortcutModAria })
+                : t('task.submitShortcutAriaLabel', { mod: shortcutModAria })
             "
           >
-            <kbd :class="shortcutKbdClass">Alt</kbd>
+            <kbd :class="shortcutKbdClass">{{ shortcutModLabel }}</kbd>
             <span class="text-[10px] text-muted-foreground">+</span>
             <kbd :class="shortcutKbdClass">S</kbd>
           </span>
