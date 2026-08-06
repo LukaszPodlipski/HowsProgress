@@ -58,6 +58,14 @@
     overflow-x: hidden !important;
     scroll-behavior: smooth;
   }
+  html.is-long-press-dragging {
+    cursor: grabbing !important;
+    user-select: none !important;
+  }
+  html.is-long-press-dragging * {
+    cursor: grabbing !important;
+    user-select: none !important;
+  }
   body {
     font-family: 'Roboto', sans-serif;
     font-size: 16px;

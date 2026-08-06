@@ -19,7 +19,7 @@ const welcomeTitle = computed(() =>
 const tips = computed(() => [
   { icon: 'lucide:pencil-line', text: t('onboarding.tip1') },
   { icon: 'lucide:link', text: t('onboarding.tip2') },
-  { icon: 'lucide:grip-vertical', text: t('onboarding.tip3') },
+  { icon: 'lucide:hand', text: t('onboarding.tip3') },
 ])
 
 const suggestions = computed(() => [

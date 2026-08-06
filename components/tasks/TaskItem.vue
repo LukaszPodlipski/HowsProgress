@@ -12,9 +12,11 @@ const props = withDefaults(
     class?: HTMLAttributes['class']
     clickable?: boolean
     dragging?: boolean
+    /** When true, item is being long-pressed (before or during drag) */
+    pressing?: boolean
     /** When true, description is always fully visible (no "show more/less") */
     descriptionAlwaysExpanded?: boolean
-    /** When true, task is embedded (e.g. in preview modal): close button instead of drag handle, actions always visible */
+    /** When true, task is embedded (e.g. in preview modal): close button, actions always visible */
     embedded?: boolean
     /** When true, edit and remove buttons stay visible without hover (e.g. product tour) */
     showActions?: boolean
@@ -28,6 +30,7 @@ const props = withDefaults(
   {
     clickable: true,
     dragging: false,
+    pressing: false,
     descriptionAlwaysExpanded: false,
     embedded: false,
     showActions: false,
@@ -40,13 +43,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'remove' | 'edit' | 'cycle-status', taskId: string): void
-  (e: 'close' | 'drag-end'): void
-  (e: 'drag-start', taskId: string, event: DragEvent): void
+  (e: 'close'): void
 }>()
-
-const onDragStart = (event: DragEvent) => {
-  emit('drag-start', props.task.id, event)
-}
 
 const { t } = useI18n()
 
@@ -108,8 +106,9 @@ const handleItemClick = () => {
     :data-task-id="task.id"
     class="relative bg-card transition-all duration-200 ease-out"
     :class="[
-      props.embedded ? 'select-text' : 'select-none',
-      props.clickable && isExpandable && 'cursor-pointer hover:border-accent active:bg-accent/60',
+      props.embedded ? 'select-text' : 'cursor-pointer select-none',
+      props.clickable && isExpandable && 'hover:border-accent active:bg-accent/60',
+      props.pressing && !props.dragging && 'bg-accent/60 border-accent',
       props.dragging &&
         'opacity-60 scale-[0.95] ring-2 ring-primary/70 ring-offset-2 ring-offset-background shadow-lg',
       props.class,
@@ -155,19 +154,6 @@ const handleItemClick = () => {
             >
               <Icon icon="lucide:pencil" class="size-3.5" />
             </button>
-          </div>
-          <div
-            v-if="!props.embedded"
-            draggable="true"
-            role="button"
-            tabindex="-1"
-            class="p-1 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-grab touch-none select-none active:cursor-grabbing"
-            :aria-label="t('task.dragHandleAriaLabel')"
-            @dragstart.stop="onDragStart"
-            @dragend.stop="emit('drag-end')"
-            @click.stop
-          >
-            <Icon icon="lucide:grip-vertical" class="size-3.5" />
           </div>
           <button
             v-if="props.embedded"

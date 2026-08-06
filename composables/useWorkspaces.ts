@@ -22,6 +22,7 @@ const workspacesReady = ref(false)
 let workspacesUnsubscribe: (() => void) | null = null
 let ensureDefaultInFlight: Promise<string> | null = null
 let bootstrapWatchRegistered = false
+let isReordering = false
 
 /* --------------------------- HELPERS ----------------------------------- */
 
@@ -55,6 +56,8 @@ const setupFirestoreWorkspacesListener = (db: Firestore, uid: string) => {
   const q = query(getWorkspacesCol(db, uid), orderBy('order', 'asc'))
 
   workspacesUnsubscribe = onSnapshot(q, snapshot => {
+    if (isReordering) return
+
     workspaces.value = snapshot.docs.map(d => ({ ...(d.data() as Workspace), id: d.id }))
     workspacesReady.value = true
 
@@ -239,6 +242,36 @@ export const useWorkspaces = () => {
     return newWs
   }
 
+  const reorderWorkspaces = async (orderedWorkspaces: Workspace[]): Promise<void> => {
+    const { $firebaseDb } = useNuxtApp()
+    const { currentUser, isLoggedIn } = useAuth()
+
+    const arr = orderedWorkspaces.map((ws, index) => ({
+      ...ws,
+      order: index,
+    }))
+
+    isReordering = true
+    workspaces.value = arr
+
+    try {
+      if (isLoggedIn.value && currentUser.value) {
+        const col = getWorkspacesCol($firebaseDb as Firestore, currentUser.value.uid)
+        const batch = writeBatch($firebaseDb as Firestore)
+
+        for (const ws of arr) {
+          batch.update(doc(col, ws.id), { order: ws.order })
+        }
+
+        await batch.commit()
+      } else {
+        saveLocalWorkspaces(arr)
+      }
+    } finally {
+      isReordering = false
+    }
+  }
+
   if (!bootstrapWatchRegistered && import.meta.client) {
     bootstrapWatchRegistered = true
     watch(
@@ -261,6 +294,7 @@ export const useWorkspaces = () => {
     addWorkspace,
     updateWorkspace,
     deleteWorkspace,
+    reorderWorkspaces,
     ensureDefaultWorkspace,
   }
 }

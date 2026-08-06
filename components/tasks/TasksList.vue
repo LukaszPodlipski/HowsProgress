@@ -45,15 +45,7 @@ const {
   windowHeight,
 })
 
-const {
-  dropTarget,
-  handleDragStart,
-  handleDragOver,
-  handleSeparatorDragOver,
-  handleDrop,
-  handleDragEnd,
-  updateAutoScroll,
-} = useTaskListDragDrop({
+const { dropTarget, pressingId, onPointerDown, onClickCapture } = useTaskListDragDrop({
   sortedTasks,
   hasSeparatorBefore,
   taskRefs,
@@ -129,7 +121,6 @@ defineExpose({ scrollToBottom })
         }"
         :style="{ height: scrollListHeigth + 'px' }"
         @scroll.passive="updateFocus"
-        @dragover.prevent="updateAutoScroll($event)"
       >
         <div v-if="isEmpty" class="scroll-list__empty">
           <TasksEmptyState @select-suggestion="emit('select-suggestion', $event)" />
@@ -147,8 +138,7 @@ defineExpose({ scrollToBottom })
               v-if="dateSeparators.has(task.id)"
               class="scroll-list__separator"
               aria-hidden="true"
-              @dragover.prevent="handleSeparatorDragOver(index, $event)"
-              @drop.prevent="handleDrop()"
+              :data-separator-index="index"
             >
               <div class="scroll-list__separator-line" />
               <span class="scroll-list__separator-label">{{ dateSeparators.get(task.id) }}</span>
@@ -163,18 +153,20 @@ defineExpose({ scrollToBottom })
             />
             <li
               :ref="el => setTaskRef(el as HTMLElement, task.id)"
-              class="scroll-list__item js-scroll-list-item relative"
+              class="scroll-list__item js-scroll-list-item relative touch-manipulation"
+              :data-task-drop-id="task.id"
               :class="{
                 'item-focus': index === focusIndex,
                 'item-visible': visibleTaskIds.has(task.id) || isTourHighlightTask(task.id),
                 'scroll-list__item--source': draggedTaskId === task.id,
               }"
-              @dragover.prevent="handleDragOver(task.id, $event)"
-              @drop.prevent="handleDrop()"
+              @pointerdown="onPointerDown(task.id, $event)"
+              @click.capture="onClickCapture"
             >
               <TaskItem
                 :task="task"
                 :dragging="draggedTaskId === task.id"
+                :pressing="pressingId === task.id"
                 :tour-id="task.id === tourHighlightTaskId ? 'demo-task' : undefined"
                 :expanded="
                   presentation.isActive.value && presentation.expandedTaskId.value === task.id
@@ -184,8 +176,6 @@ defineExpose({ scrollToBottom })
                 @remove="handleRemoveTask"
                 @edit="handleEditTask"
                 @cycle-status="cycleTaskStatus"
-                @drag-start="handleDragStart"
-                @drag-end="handleDragEnd"
               />
             </li>
           </template>

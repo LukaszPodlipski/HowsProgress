@@ -10,7 +10,6 @@
     "addDescriptionShortcutHint": "Dodaj opis",
     "save": "Zapisz",
     "editModalTitle": "Edytuj zadanie",
-    "dragHandleAriaLabel": "Przeciągnij zadanie",
     "editAriaLabel": "Edytuj zadanie",
     "removeAriaLabel": "Usuń zadanie",
     "closeAriaLabel": "Zamknij",
@@ -110,7 +109,7 @@
     "description": "Tu zapisujesz nad czym pracujesz każdego dnia. Dodaj pierwsze zadanie w polu poniżej - albo wybierz gotową sugestię.",
     "tip1": "Wpisz krótki tytuł np. nazwę ticketa lub temat spotkania",
     "tip2": "Dodaj link do Git lub Jira, jeśli chcesz mieć szybki dostęp",
-    "tip3": "Przeciągaj zadania, żeby zmienić kolejność",
+    "tip3": "Przytrzymaj zadanie, żeby zmienić kolejność",
     "suggestionsLabel": "Szybki start",
     "suggestion1": "Code review PR",
     "suggestion2": "Spotkanie zespołowe",
@@ -156,7 +155,7 @@
       },
       "taskList": {
         "title": "Lista zadań",
-        "description": "Zadania są pogrupowane według dat. Kolejność zmienia się przez przeciągnięcie karty."
+        "description": "Zadania są pogrupowane według dat. Kolejność zmienisz, przytrzymując kartę i przeciągając ją."
       },
       "demoTask": {
         "title": "Szczegóły zadania",

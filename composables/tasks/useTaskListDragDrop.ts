@@ -1,5 +1,6 @@
 import type { DropPlacement, DropTarget } from '@/composables/tasks/taskListDragDrop.types'
 import { getGroupKey, sortTasksByDisplayDate } from '@/composables/tasks/taskDateGroups'
+import { useLongPressDrag } from '@/composables/useLongPressDrag'
 import type { Task } from '@/types'
 import type { ComputedRef, Ref } from 'vue'
 
@@ -93,11 +94,11 @@ export const useTaskListDragDrop = ({
     autoScrollSpeed = 0
   }
 
-  const updateAutoScroll = (event: DragEvent) => {
+  const updateAutoScroll = (clientY: number) => {
     if (!listContainer.value) return
     const rect = listContainer.value.getBoundingClientRect()
-    const distFromTop = event.clientY - rect.top
-    const distFromBottom = rect.bottom - event.clientY
+    const distFromTop = clientY - rect.top
+    const distFromBottom = rect.bottom - clientY
 
     if (distFromTop < SCROLL_ZONE && distFromTop > 0) {
       autoScrollSpeed = -((SCROLL_ZONE - distFromTop) / SCROLL_ZONE) * MAX_SCROLL_SPEED
@@ -228,35 +229,32 @@ export const useTaskListDragDrop = ({
     )
   }
 
-  const handleDragStart = (taskId: string, event: DragEvent) => {
-    const li = taskRefs.value.get(taskId)
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move'
-      event.dataTransfer.setData('text/plain', taskId)
-      if (li) {
-        event.dataTransfer.setDragImage(li, li.clientWidth / 2, 24)
+  const resolveDropTargetAtPoint = (clientX: number, clientY: number) => {
+    const el = document.elementFromPoint(clientX, clientY)
+    if (!el) {
+      dropTarget.value = null
+      return
+    }
+
+    const separator = el.closest('[data-separator-index]') as HTMLElement | null
+    if (separator) {
+      const index = Number(separator.dataset.separatorIndex)
+      if (!Number.isNaN(index)) {
+        dropTarget.value = getDropTargetFromSeparator(index, clientY, separator)
+        return
       }
     }
-    requestAnimationFrame(() => {
-      draggedTaskId.value = taskId
-    })
+
+    const taskEl = el.closest('[data-task-drop-id]') as HTMLElement | null
+    if (taskEl?.dataset.taskDropId) {
+      dropTarget.value = getDropTargetFromTask(taskEl.dataset.taskDropId, clientY)
+      return
+    }
+
+    dropTarget.value = null
   }
 
-  const handleDragOver = (taskId: string, event: DragEvent) => {
-    updateAutoScroll(event)
-    dropTarget.value = getDropTargetFromTask(taskId, event.clientY)
-  }
-
-  const handleSeparatorDragOver = (taskIndex: number, event: DragEvent) => {
-    updateAutoScroll(event)
-    dropTarget.value = getDropTargetFromSeparator(
-      taskIndex,
-      event.clientY,
-      event.currentTarget as HTMLElement
-    )
-  }
-
-  const handleDrop = () => {
+  const commitDrop = () => {
     const draggedId = draggedTaskId.value
     const target = dropTarget.value
     if (!draggedId || !target) return
@@ -279,12 +277,27 @@ export const useTaskListDragDrop = ({
     reorderTasksOrdered(reordered, draggedTask.id, newDisplayDate)
   }
 
-  const handleDragEnd = () => {
+  const finishDrag = () => {
     draggedTaskId.value = null
     dropTarget.value = null
     stopAutoScroll()
     onDragEnd?.()
   }
+
+  const { onPointerDown, onClickCapture, pressingId } = useLongPressDrag({
+    onArm: id => {
+      draggedTaskId.value = id
+    },
+    onMove: (_id, point) => {
+      updateAutoScroll(point.clientY)
+      resolveDropTargetAtPoint(point.clientX, point.clientY)
+    },
+    onRelease: () => {
+      commitDrop()
+      finishDrag()
+    },
+    onCancel: finishDrag,
+  })
 
   onUnmounted(() => {
     stopAutoScroll()
@@ -292,12 +305,9 @@ export const useTaskListDragDrop = ({
 
   return {
     draggedTaskId,
+    pressingId,
     dropTarget,
-    handleDragStart,
-    handleDragOver,
-    handleSeparatorDragOver,
-    handleDrop,
-    handleDragEnd,
-    updateAutoScroll,
+    onPointerDown,
+    onClickCapture,
   }
 }
