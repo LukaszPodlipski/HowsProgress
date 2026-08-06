@@ -1,13 +1,13 @@
 {
-  "version": "1.0.0-build9",
-  "publishedAt": "2026-07-12T20:42:10.913Z",
+  "version": "1.0.0-build11",
+  "publishedAt": "2026-08-06T21:35:54.152Z",
   "platforms": {
     "windows": {
-      "url": "https://github.com/LukaszPodlipski/HowsProgress/releases/download/desktop-v1.0.0-build9/Hows.Progress_1.0.0_x64-setup.exe",
+      "url": "https://github.com/LukaszPodlipski/HowsProgress/releases/download/desktop-v1.0.0-build11/Hows.Progress_1.0.0_x64-setup.exe",
       "filename": "Hows.Progress_1.0.0_x64-setup.exe"
     },
     "macos": {
-      "url": "https://github.com/LukaszPodlipski/HowsProgress/releases/download/desktop-v1.0.0-build9/Hows.Progress_1.0.0_aarch64.dmg",
+      "url": "https://github.com/LukaszPodlipski/HowsProgress/releases/download/desktop-v1.0.0-build11/Hows.Progress_1.0.0_aarch64.dmg",
       "filename": "Hows.Progress_1.0.0_aarch64.dmg"
     }
   }
